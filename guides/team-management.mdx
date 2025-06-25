@@ -1,0 +1,31 @@
+---
+title: 'Team Management Guide'
+description: 'Manage teams and users with Rise B2B API'
+---
+
+# Team Management Guide
+
+Learn how to create, update, and manage teams and users.
+
+## Create a Team
+```bash
+curl -X POST "https://api.rise.works/v2/teams" -d '{ "name": "Engineering", "company_nanoid": "company_123" }'
+```
+
+## Add a User to a Team
+```bash
+curl -X POST "https://api.rise.works/v2/teams/{team_nanoid}/users" -d '{ "user_nanoid": "user_123" }'
+```
+
+## Update Team Settings
+```bash
+curl -X PUT "https://api.rise.works/v2/teams/{team_nanoid}/settings" ...
+```
+
+## Remove a User
+```bash
+curl -X DELETE "https://api.rise.works/v2/teams/{team_nanoid}/users/{user_nanoid}"
+```
+
+## Permissions
+See [Permissions](/concepts/permissions) for details. 

@@ -1,0 +1,183 @@
+---
+title: 'RiseID'
+description: 'Understanding RiseID as the core identity system in the Rise ecosystem'
+---
+
+# RiseID
+
+RiseID is the core identity system in the Rise ecosystem. Every user, team, and company gets its own RiseID once registered/created in the platform. The RiseID contract is deployed by Rise and all fees are paid by Rise - users do not have to pay any fees for contract deployment.
+
+## What is RiseID?
+
+A RiseID is a unique 42-character identifier that represents an entity in the Rise ecosystem. It follows the Ethereum address format: `0x` followed by 40 hexadecimal characters (e.g., `0x1234567890abcdef1234567890abcdef12345678`).
+
+### RiseID Contract Structure
+
+The RiseID contract can be thought of as a **collection of wallets**, where every wallet has a role inside the contract. This role determines what the wallet can/cannot do within the RiseID.
+
+<CardGroup cols={3}>
+  <Card title="User RiseID" icon="user">
+    Deployed with the user's RSK as owner role
+    <br />
+    Hardware used during onboarding controls the contract
+  </Card>
+  <Card title="Company RiseID" icon="building">
+    Deployed with the user RiseID as owner
+    <br />
+    All wallets in user RiseID can control company RiseID
+  </Card>
+  <Card title="Team RiseID" icon="users">
+    Deployed with its owner company as owner
+    <br />
+    All wallets in user and company RiseIDs can control team RiseID
+  </Card>
+</CardGroup>
+
+## RiseID Hierarchy
+
+The RiseID system implements a hierarchical permission structure:
+
+```
+User RiseID (Owner: User's RSK)
+    ↓
+Company RiseID (Owner: User RiseID)
+    ↓
+Team RiseID (Owner: Company RiseID)
+```
+
+### Permission Bubbling
+
+When a user wants to run a transaction in a Team RiseID, they sign with their RSK. Since the RSK is not directly added to the team RiseID, the team RiseID will "bubble up" the permission check through the hierarchy:
+
+1. **Team RiseID** checks if RSK has permission → Not found
+2. **Company RiseID** checks if RSK has permission → Not found  
+3. **User RiseID** validates the RSK as a valid owner → **Permission granted**
+
+This hierarchical structure allows for efficient permission management across the entire organization.
+
+## RiseID Contract Features
+
+### ERC725X and ERC725Y Implementation
+
+The RiseID contract implements **ERC725X** and **ERC725Y** standards, which means:
+
+- **ERC725X**: The owner can use the RiseID as a storage for any kind of information using key/value pairs
+- **ERC725Y**: Supports calling arbitrary transactions through its `call` and `execute` functions
+
+### Arbitrary Transaction Execution
+
+Wallets controlling a RiseID can:
+- Encode other contract calls
+- Use the RiseID to execute operations
+- Store and retrieve data using key/value pairs
+
+## RiseID Types and Usage
+
+### RiseID vs Nanoid Comparison
+
+| Aspect | RiseID | Nanoid |
+|--------|--------|--------|
+| **Format** | 42-character Ethereum address | Variable length string with prefix |
+| **Usage** | Authentication and contract control | API operations and balance queries |
+| **Example** | `0x1234567890abcdef1234567890abcdef12345678` | `te-abc123def456` |
+| **Purpose** | On-chain identity and permissions | API endpoint identifiers |
+
+### When to Use RiseID
+
+- **Authentication**: SIWE authentication flow
+- **Contract Operations**: Smart contract interactions
+- **Permission Management**: Role-based access control
+- **On-chain Identity**: Blockchain-based identity verification
+
+### When to Use Nanoid
+
+- **API Operations**: Most API endpoints
+- **Balance Queries**: Entity balance lookups
+- **Team Management**: Team-related operations
+- **Payment Processing**: Payment creation and management
+
+## RiseID Recovery
+
+### Recovery Process
+
+RiseIDs are controlled by user-owned wallets. If a user loses access to their wallets, they become locked out of their RiseID and cannot perform actions like payments or withdrawals.
+
+**Recovery Solution**: Rise can recover a RiseID by assigning it a new owner address chosen by the user.
+
+### Recovery Steps
+
+1. **Contact Support**: User contacts Rise support when locked out
+2. **Identity Verification**: Support verifies user identity
+3. **New Owner Assignment**: Rise assigns a new owner address
+4. **Access Restoration**: User regains control of their RiseID
+
+<Warning>
+  **Important**: Always maintain secure backup of your wallet credentials. Recovery is available but should be used as a last resort.
+</Warning>
+
+## Security Considerations
+
+### RiseID Security
+
+- **42-character format**: RiseID must be exactly 42 characters (Ethereum address format)
+- **Contract ownership**: Only authorized wallets can control RiseID contracts
+- **Hierarchical permissions**: Permission checks bubble up through the hierarchy
+- **Recovery mechanism**: Support can help recover lost access
+
+### Best Practices
+
+- **Secure wallet storage**: Use hardware wallets for high-value operations
+- **Permission management**: Regularly review and update wallet permissions
+- **Backup strategies**: Maintain secure backups of wallet credentials
+- **Support contact**: Keep support contact information readily available
+
+## Code Examples
+
+### RiseID Format Validation
+
+```javascript
+function validateRiseID(riseid) {
+  // RiseID must be exactly 42 characters (0x + 40 hex chars)
+  const riseidRegex = /^0x[a-fA-F0-9]{40}$/;
+  return riseidRegex.test(riseid) && riseid.length === 42;
+}
+
+// Example usage
+const riseid = "0x1234567890abcdef1234567890abcdef12345678";
+console.log(validateRiseID(riseid)); // true
+```
+
+### RiseID vs Nanoid Usage
+
+```javascript
+// Authentication - Use RiseID
+const authenticate = async (walletAddress, riseid) => {
+  const response = await fetch(
+    `/v2/auth/siwe?wallet=${walletAddress}&riseid=${riseid}`
+  );
+  return response.json();
+};
+
+// Balance query - Use Nanoid
+const getBalance = async (nanoid) => {
+  const response = await fetch(`/v2/balance?nanoid=${nanoid}`);
+  return response.json();
+};
+```
+
+## Related Concepts
+
+<CardGroup cols={2}>
+  <Card title="Entity Balance" icon="wallet" href="/concepts/entity-balance">
+    Understanding balance management with nanoid
+  </Card>
+  <Card title="Authentication" icon="key" href="/authentication">
+    SIWE authentication with RiseID
+  </Card>
+  <Card title="Teams" icon="users" href="/concepts/teams">
+    Team management and permissions
+  </Card>
+  <Card title="Permissions" icon="lock" href="/concepts/permissions">
+    Role-based access control
+  </Card>
+</CardGroup> 

@@ -1,0 +1,389 @@
+---
+title: 'Entity Nanoid'
+description: 'Understanding nanoid identifiers and their usage in the Rise ecosystem'
+---
+
+# Entity Nanoid
+
+Entity Nanoid is the primary identifier system used throughout the Rise B2B API for all entities and operations. Unlike RiseID (used for authentication), nanoids are used for API operations, database references, and internal entity management.
+
+## What is Nanoid?
+
+A nanoid is a unique, URL-friendly identifier that follows a specific format: **prefix + hyphen + 12-character random string**. All nanoids in Rise are exactly **15 characters long** and use a standardized prefix system to identify the entity type.
+
+### Nanoid Format
+
+```
+[prefix]-[12 random characters]
+```
+
+**Example**: `te-abc123def456` (15 characters total)
+
+## Core Entity Nanoids
+
+The primary entity types in Rise each have their own nanoid format:
+
+<CardGroup cols={3}>
+  <Card title="Team Nanoid" icon="users">
+    Format: `te-abc123def456`
+    <br />
+    Example: `te-xyz789abc123`
+    <br />
+    <Badge>15 characters</Badge>
+  </Card>
+  <Card title="Company Nanoid" icon="building">
+    Format: `co-abc123def456`
+    <br />
+    Example: `co-def456ghi789`
+    <br />
+    <Badge>15 characters</Badge>
+  </Card>
+  <Card title="User Nanoid" icon="user">
+    Format: `us-abc123def456`
+    <br />
+    Example: `us-ghi789jkl012`
+    <br />
+    <Badge>15 characters</Badge>
+  </Card>
+</CardGroup>
+
+## Core Nanoid Reference
+
+Here are the essential nanoid types used in Rise B2B API:
+
+### Core Entities
+| Entity Type | Prefix | Format | Example | Description |
+|-------------|--------|--------|---------|-------------|
+| **Team** | `te` | `te-abc123def456` | `te-xyz789abc123` | Team or department |
+| **Company** | `co` | `co-abc123def456` | `co-def456ghi789` | Organization |
+| **User** | `us` | `us-abc123def456` | `us-ghi789jkl012` | Individual user |
+
+### Financial & Operational Entities
+| Entity Type | Prefix | Format | Example | Description |
+|-------------|--------|--------|---------|-------------|
+| **Payment** | `pa` | `pa-abc123def456` | `pa-pay123def456` | Individual payment |
+| **Payment Group** | `pg` | `pg-abc123def456` | `pg-grp123def456` | Batch payment group |
+| **Invite** | `in` | `in-abc123def456` | `in-inv123def456` | User invitation |
+
+## Nanoid Usage in API
+
+### Entity Balance API
+
+The most common usage is in the entity balance endpoint:
+
+<RequestExample>
+```bash
+curl -X GET "https://api.rise.works/v2/balance?nanoid=te-abc123def456" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+</RequestExample>
+
+### Team Management API
+
+Team operations use team nanoids:
+
+<RequestExample>
+```bash
+curl -X GET "https://api.rise.works/v2/teams/te-abc123def456/users" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+</RequestExample>
+
+### Payments API
+
+Payment operations use payment nanoids:
+
+<RequestExample>
+```bash
+curl -X GET "https://api.rise.works/v2/payments?team_nanoid=te-abc123def456" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+</RequestExample>
+
+### Invites API
+
+Invite management uses invite nanoids:
+
+<RequestExample>
+```bash
+curl -X GET "https://api.rise.works/v2/invites?nanoid=te-abc123def456" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+</RequestExample>
+
+## Nanoid Validation
+
+When working with nanoids, you should validate their format before making API calls:
+
+### Validation Rules
+
+1. **Length**: Must be exactly 15 characters
+2. **Format**: Must follow the pattern `[prefix]-[12 random characters]`
+3. **Prefix**: Must start with a valid prefix (`te-`, `co-`, `us-`, `pa-`, `pg-`, `in-`)
+
+### Client-Side Validation
+
+<CodeGroup>
+
+```javascript
+class NanoidValidator {
+  // Validate nanoid format
+  static validateNanoid(nanoid) {
+    if (!nanoid || typeof nanoid !== 'string') {
+      return false;
+    }
+    
+    // Must be exactly 15 characters
+    if (nanoid.length !== 15) {
+      return false;
+    }
+    
+    // Must have a valid prefix
+    const validPrefixes = ['te-', 'co-', 'us-', 'pa-', 'pg-', 'in-'];
+    return validPrefixes.some(prefix => nanoid.startsWith(prefix));
+  }
+
+  // Extract entity type from nanoid
+  static getEntityType(nanoid) {
+    if (nanoid.startsWith('te-')) return 'team';
+    if (nanoid.startsWith('co-')) return 'company';
+    if (nanoid.startsWith('us-')) return 'user';
+    if (nanoid.startsWith('pa-')) return 'payment';
+    if (nanoid.startsWith('pg-')) return 'payment_group';
+    if (nanoid.startsWith('in-')) return 'invite';
+    
+    return 'unknown';
+  }
+
+  // Generate API URL based on nanoid type
+  static getApiUrl(nanoid, endpoint) {
+    const entityType = this.getEntityType(nanoid);
+    
+    switch (entityType) {
+      case 'team':
+        return `/v2/teams/${nanoid}${endpoint}`;
+      case 'company':
+        return `/v2/companies/${nanoid}${endpoint}`;
+      case 'user':
+        return `/v2/users/${nanoid}${endpoint}`;
+      case 'payment':
+        return `/v2/payments/${nanoid}${endpoint}`;
+      case 'invite':
+        return `/v2/invites/${nanoid}${endpoint}`;
+      default:
+        throw new Error(`Unsupported entity type: ${entityType}`);
+    }
+  }
+}
+```
+
+```typescript
+interface NanoidInfo {
+  entityType: string;
+  prefix: string;
+  randomPart: string;
+  isValid: boolean;
+}
+
+class NanoidValidator {
+  // Parse nanoid into components
+  static parseNanoid(nanoid: string): NanoidInfo {
+    if (!nanoid || typeof nanoid !== 'string') {
+      return {
+        entityType: 'unknown',
+        prefix: '',
+        randomPart: '',
+        isValid: false
+      };
+    }
+
+    const isValid = this.validateNanoid(nanoid);
+    const prefix = nanoid.substring(0, 3); // Includes the hyphen
+    const randomPart = nanoid.substring(3);
+    const entityType = this.getEntityType(nanoid);
+
+    return {
+      entityType,
+      prefix,
+      randomPart,
+      isValid
+    };
+  }
+
+  // Validate nanoid format
+  static validateNanoid(nanoid: string): boolean {
+    if (!nanoid || typeof nanoid !== 'string') {
+      return false;
+    }
+    
+    // Must be exactly 15 characters
+    if (nanoid.length !== 15) {
+      return false;
+    }
+    
+    // Must have a valid prefix
+    const validPrefixes = ['te-', 'co-', 'us-', 'pa-', 'pg-', 'in-'];
+    return validPrefixes.some(prefix => nanoid.startsWith(prefix));
+  }
+
+  // Extract entity type from nanoid
+  static getEntityType(nanoid: string): string {
+    if (nanoid.startsWith('te-')) return 'team';
+    if (nanoid.startsWith('co-')) return 'company';
+    if (nanoid.startsWith('us-')) return 'user';
+    if (nanoid.startsWith('pa-')) return 'payment';
+    if (nanoid.startsWith('pg-')) return 'payment_group';
+    if (nanoid.startsWith('in-')) return 'invite';
+    
+    return 'unknown';
+  }
+}
+```
+
+</CodeGroup>
+
+## React Hook for Nanoid Management
+
+```typescript
+import { useState, useCallback } from 'react';
+
+interface UseNanoid {
+  validateNanoid: (nanoid: string) => boolean;
+  getEntityType: (nanoid: string) => string;
+  parseNanoid: (nanoid: string) => NanoidInfo;
+}
+
+export function useNanoid(): UseNanoid {
+  const validateNanoid = useCallback((nanoid: string): boolean => {
+    if (!nanoid || typeof nanoid !== 'string') {
+      return false;
+    }
+    
+    if (nanoid.length !== 15) {
+      return false;
+    }
+    
+    const validPrefixes = ['te-', 'co-', 'us-', 'pa-', 'pg-', 'in-'];
+    return validPrefixes.some(prefix => nanoid.startsWith(prefix));
+  }, []);
+
+  const getEntityType = useCallback((nanoid: string): string => {
+    if (nanoid.startsWith('te-')) return 'team';
+    if (nanoid.startsWith('co-')) return 'company';
+    if (nanoid.startsWith('us-')) return 'user';
+    if (nanoid.startsWith('pa-')) return 'payment';
+    if (nanoid.startsWith('pg-')) return 'payment_group';
+    if (nanoid.startsWith('in-')) return 'invite';
+    
+    return 'unknown';
+  }, []);
+
+  const parseNanoid = useCallback((nanoid: string): NanoidInfo => {
+    const isValid = validateNanoid(nanoid);
+    const prefix = nanoid.substring(0, 3);
+    const randomPart = nanoid.substring(3);
+    const entityType = getEntityType(nanoid);
+
+    return {
+      entityType,
+      prefix,
+      randomPart,
+      isValid
+    };
+  }, [validateNanoid, getEntityType]);
+
+  return {
+    validateNanoid,
+    getEntityType,
+    parseNanoid
+  };
+}
+```
+
+## Error Handling
+
+Common errors when working with nanoids:
+
+| Error | Description | Solution |
+|-------|-------------|----------|
+| `Invalid nanoid format` | Nanoid doesn't match expected pattern | Ensure nanoid is 15 characters with valid prefix |
+| `Entity not found` | Nanoid doesn't exist in system | Verify the nanoid exists and is correct |
+| `Permission denied` | User lacks access to entity | Check user permissions for the entity |
+| `Invalid entity type` | Nanoid type doesn't match expected type | Verify you're using the correct nanoid type |
+
+### Common Error Scenarios
+
+**Invalid Nanoid Format:**
+```json
+{
+  "success": false,
+  "data": "Invalid nanoid format: must start with te-, co-, or us-"
+}
+```
+
+**Entity Not Found:**
+```json
+{
+  "success": false,
+  "data": "No entity found with nanoid te-invalid123"
+}
+```
+
+**Permission Denied:**
+```json
+{
+  "success": false,
+  "data": "User us-abc123def456 must have admin access to team te-xyz789abc123"
+}
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="🔍 Validation" icon="check-circle">
+    Always validate nanoid format before using
+  </Card>
+  <Card title="📝 Documentation" icon="file-text">
+    Document which nanoid types your integration uses
+  </Card>
+  <Card title="🛡️ Security" icon="shield">
+    Never expose nanoid generation logic to clients
+  </Card>
+  <Card title="🔄 Caching" icon="refresh-cw">
+    Cache nanoid lookups for performance
+  </Card>
+</CardGroup>
+
+### Security Considerations
+
+- **Client-side validation**: Always validate nanoid format before making API calls
+- **No sequential patterns**: Nanoids are cryptographically random
+- **Prefix validation**: Always validate the prefix matches expected entity type
+- **Length validation**: Ensure nanoids are exactly 15 characters
+
+### Performance Tips
+
+- **Batch operations**: Use batch endpoints when working with multiple nanoids
+- **Caching**: Cache frequently accessed nanoid lookups
+- **Validation**: Validate nanoid format early to avoid unnecessary API calls
+
+## Related Concepts
+
+<CardGroup cols={2}>
+  <Card title="RiseID" icon="id" href="/concepts/riseid">
+    Understanding RiseID for authentication
+  </Card>
+  <Card title="Entity Balance" icon="wallet" href="/concepts/entity-balance">
+    Balance management with nanoid
+  </Card>
+  <Card title="Teams" icon="users" href="/concepts/teams">
+    Team management concepts
+  </Card>
+  <Card title="Permissions" icon="lock" href="/concepts/permissions">
+    Understanding access control
+  </Card>
+</CardGroup>
+
+<Note>
+  **Nanoid vs RiseID**: Remember that nanoids are used for API operations and database references, while RiseID is used for authentication and smart contract interactions.
+</Note> 

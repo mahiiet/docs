@@ -1,0 +1,186 @@
+---
+title: 'Entity Balance'
+description: 'Understanding entity balance management in the Rise ecosystem'
+---
+
+# Entity Balance
+
+Entity balance management in Rise tracks funds on the blockchain for users, teams, and companies. Every entity has an associated balance that can be queried using their unique identifier.
+
+## Entity Balance API
+
+### Get Entity Balance
+
+Retrieve the current balance for a specific entity:
+
+<RequestExample>
+```bash
+curl -X GET "https://api.rise.works/v2/balance?nanoid=te-abc123def456" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "rise_account_address": "0x1234567890abcdef...",
+    "balances": [
+      {
+        "currency": "USD",
+        "balance_cents": 100000
+      },
+      {
+        "currency": "EUR",
+        "balance_cents": 50000
+      }
+    ]
+  }
+}
+```
+</ResponseExample>
+
+### Supported Currencies
+
+You can specify which currencies to query:
+
+<RequestExample>
+```bash
+curl -X GET "https://api.rise.works/v2/balance?nanoid=te-abc123def456&currencies=USD,EUR" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+</RequestExample>
+
+## Balance Components
+
+<CardGroup cols={2}>
+  <Card title="Available Balance">
+    Funds that can be used for payments and transactions
+  </Card>
+  <Card title="Currency Support">
+    Multiple currencies supported (USD, EUR, etc.)
+  </Card>
+  <Card title="Precision">
+    All amounts returned in cents for precision
+  </Card>
+  <Card title="Real-time">
+    Balances updated in real-time from blockchain
+  </Card>
+</CardGroup>
+
+## Authorization Requirements
+
+Different entity types have different authorization requirements:
+
+### Team Balance Access
+- **Team Admin**: Full access to team balance
+- **Team Finance Admin**: Full access to team balance  
+- **Team Viewer**: Read-only access to team balance
+- **Team Employee**: No access to team balance
+
+### Company Balance Access
+- **Company Owner**: Full access to company balance
+- **Org Admin**: Full access to company balance
+- **Org Finance Admin**: Full access to company balance
+- **Org Viewer**: Read-only access to company balance
+
+### User Balance Access
+- **User**: Can only access their own balance
+- **Others**: No access to user balance
+
+## Integration Example
+
+```javascript
+class RiseEntityBalance {
+  constructor(baseUrl = 'https://api.rise.works', jwtToken) {
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async getBalance(nanoid, currencies = null) {
+    const params = new URLSearchParams({ nanoid });
+    if (currencies) {
+      params.append('currencies', currencies.join(','));
+    }
+    
+    const response = await fetch(
+      `${this.baseUrl}/v2/balance?${params}`,
+      { headers: this.headers }
+    );
+    return response.json();
+  }
+}
+```
+
+## Error Handling
+
+Common errors when working with entity balances:
+
+| HTTP Status | Description | Solution |
+|-------------|-------------|----------|
+| `400` | Bad Request - Invalid nanoid format | Ensure nanoid follows correct format |
+| `401` | Unauthorized - Invalid JWT token | Re-authenticate to get a valid JWT |
+| `403` | Forbidden - Insufficient permissions | Check user permissions for the entity |
+| `404` | Not Found - Entity doesn't exist | Verify the nanoid exists in the system |
+| `500` | Internal Server Error | Retry the request or contact support |
+
+### Common Error Scenarios
+
+**Invalid Nanoid Format (400):**
+```json
+{
+  "success": false,
+  "data": "Invalid nanoid format: must start with te-, co-, or us-"
+}
+```
+
+**Entity Not Found (404):**
+```json
+{
+  "success": false,
+  "data": "No entity found with nanoid te-invalid123"
+}
+```
+
+**Permission Denied (403):**
+```json
+{
+  "success": false,
+  "data": "User us-abc123def456 must have admin access to team te-xyz789abc123. Current role: team_employee"
+}
+```
+
+## Security Considerations
+
+<Warning>
+  **Always verify entity ownership and permissions** before accessing balance information. Only authorized users should have access to entity balances.
+</Warning>
+
+- **Permission Validation**: Ensure users have proper permissions to access entity balances
+- **Rate Limiting**: Implement appropriate rate limiting for balance queries
+- **Audit Logging**: Log all balance access for security auditing
+
+## Related Concepts
+
+<CardGroup cols={2}>
+  <Card title="Entity Nanoid" icon="hash" href="/concepts/entity-nanoid">
+    Understanding nanoid identifiers
+  </Card>
+  <Card title="Teams" icon="users" href="/concepts/teams">
+    Team management concepts
+  </Card>
+  <Card title="Payments" icon="credit-card" href="/concepts/payments">
+    Payment processing and flows
+  </Card>
+  <Card title="Permissions" icon="lock" href="/concepts/permissions">
+    Understanding access control
+  </Card>
+</CardGroup>
+
+<Note>
+  **Balance Precision**: All balance amounts are returned in cents to maintain precision. Convert to decimal format only when displaying to users.
+</Note> 

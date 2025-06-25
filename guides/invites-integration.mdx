@@ -1,0 +1,684 @@
+---
+title: 'Invites Integration Guide'
+description: 'Complete guide to managing team invites and user onboarding with Rise B2B API'
+---
+
+# Invites Integration Guide
+
+Rise B2B API provides a comprehensive invitation system for onboarding new users to teams and managing permissions. This guide covers the complete invite flow from creation to acceptance.
+
+## Invite Flow Overview
+
+<Steps>
+  <Step title="Create Invite">
+    Generate an invitation for a new user with specific permissions
+  </Step>
+  <Step title="Send Invite">
+    Deliver the invitation via email or direct link
+  </Step>
+  <Step title="User Accepts">
+    User accepts the invitation and completes onboarding
+  </Step>
+  <Step title="Join Team">
+    User is added to the team with specified permissions
+  </Step>
+</Steps>
+
+## Creating Invites
+
+### Step 1: Create Team Invite
+
+Create an invitation for a new user to join a team:
+
+<RequestExample>
+```bash
+curl -X POST "https://api.rise.works/v2/invites" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "team_nanoid": "team_123",
+    "email": "newuser@company.com",
+    "role": "team_employee",
+    "permissions": ["pay", "view"],
+    "message": "Welcome to our team! Please accept this invitation to get started."
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "invite_id": "inv_123456789",
+    "team_nanoid": "team_123",
+    "email": "newuser@company.com",
+    "role": "team_employee",
+    "permissions": ["pay", "view"],
+    "status": "pending",
+    "expires_at": "2024-02-01T00:00:00Z",
+    "invite_url": "https://app.rise.works/invite/inv_123456789",
+    "created_at": "2024-01-01T12:00:00Z"
+  }
+}
+```
+</ResponseExample>
+
+### Step 2: Send Invitation
+
+Send the invitation via email or share the invite URL:
+
+<CodeGroup>
+
+```javascript
+class RiseInvites {
+  constructor(baseUrl = 'https://api.rise.works', jwtToken) {
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async createInvite(teamNanoid, email, role, permissions, message = '') {
+    const inviteData = {
+      team_nanoid: teamNanoid,
+      email: email,
+      role: role,
+      permissions: permissions,
+      message: message
+    };
+
+    const response = await fetch(`${this.baseUrl}/v2/invites`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(inviteData)
+    });
+
+    return response.json();
+  }
+
+  async sendInviteEmail(inviteId, customMessage = '') {
+    const response = await fetch(`${this.baseUrl}/v2/invites/${inviteId}/send`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({ message: customMessage })
+    });
+
+    return response.json();
+  }
+}
+```
+
+```typescript
+interface InviteData {
+  team_nanoid: string;
+  email: string;
+  role: 'team_admin' | 'team_finance_admin' | 'team_employee' | 'team_viewer';
+  permissions: string[];
+  message?: string;
+}
+
+interface InviteResponse {
+  success: boolean;
+  data: {
+    invite_id: string;
+    team_nanoid: string;
+    email: string;
+    role: string;
+    permissions: string[];
+    status: 'pending' | 'accepted' | 'expired' | 'cancelled';
+    expires_at: string;
+    invite_url: string;
+    created_at: string;
+  };
+}
+
+class RiseInvites {
+  private baseUrl: string;
+  private headers: Record<string, string>;
+
+  constructor(baseUrl: string = 'https://api.rise.works', jwtToken: string) {
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async createInvite(inviteData: InviteData): Promise<InviteResponse> {
+    const response = await fetch(`${this.baseUrl}/v2/invites`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(inviteData)
+    });
+
+    return response.json();
+  }
+
+  async sendInviteEmail(inviteId: string, customMessage: string = ''): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/v2/invites/${inviteId}/send`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({ message: customMessage })
+    });
+
+    return response.json();
+  }
+}
+```
+
+```python
+import requests
+from typing import List, Optional
+
+class RiseInvites:
+    def __init__(self, base_url: str = "https://api.rise.works", jwt_token: str = None):
+        self.base_url = base_url
+        self.headers = {
+            "Authorization": f"Bearer {jwt_token}",
+            "Content-Type": "application/json"
+        }
+    
+    def create_invite(
+        self, 
+        team_nanoid: str, 
+        email: str, 
+        role: str, 
+        permissions: List[str], 
+        message: str = ""
+    ) -> dict:
+        """Create a new team invite"""
+        invite_data = {
+            "team_nanoid": team_nanoid,
+            "email": email,
+            "role": role,
+            "permissions": permissions,
+            "message": message
+        }
+        
+        response = requests.post(
+            f"{self.base_url}/v2/invites",
+            headers=self.headers,
+            json=invite_data
+        )
+        return response.json()
+    
+    def send_invite_email(self, invite_id: str, custom_message: str = "") -> dict:
+        """Send invitation email"""
+        response = requests.post(
+            f"{self.base_url}/v2/invites/{invite_id}/send",
+            headers=self.headers,
+            json={"message": custom_message}
+        )
+        return response.json()
+```
+
+</CodeGroup>
+
+## Managing Invites
+
+### List Team Invites
+
+Get all pending and accepted invites for a team:
+
+<RequestExample>
+```bash
+curl -X GET "https://api.rise.works/v2/invites?team_nanoid=team_123&status=pending" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "invites": [
+      {
+        "invite_id": "inv_123456789",
+        "team_nanoid": "team_123",
+        "email": "newuser@company.com",
+        "role": "team_employee",
+        "permissions": ["pay", "view"],
+        "status": "pending",
+        "expires_at": "2024-02-01T00:00:00Z",
+        "created_at": "2024-01-01T12:00:00Z"
+      }
+    ]
+  }
+}
+```
+</ResponseExample>
+
+### Cancel Invite
+
+Cancel a pending invitation:
+
+<RequestExample>
+```bash
+curl -X DELETE "https://api.rise.works/v2/invites/inv_123456789" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": "Invitation cancelled successfully"
+}
+```
+</ResponseExample>
+
+### Resend Invite
+
+Resend an invitation email:
+
+<RequestExample>
+```bash
+curl -X POST "https://api.rise.works/v2/invites/inv_123456789/resend" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Reminder: Please accept your team invitation"
+  }'
+```
+</RequestExample>
+
+## User Acceptance Flow
+
+### Step 1: User Accesses Invite
+
+When a user clicks the invite link, they'll see the invitation details:
+
+<RequestExample>
+```bash
+curl -X GET "https://api.rise.works/v2/invites/inv_123456789/details"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "invite_id": "inv_123456789",
+    "team": {
+      "name": "Engineering Team",
+      "company": "Acme Corp"
+    },
+    "role": "team_employee",
+    "permissions": ["pay", "view"],
+    "invited_by": "admin@company.com",
+    "message": "Welcome to our team!",
+    "expires_at": "2024-02-01T00:00:00Z"
+  }
+}
+```
+</ResponseExample>
+
+### Step 2: User Accepts Invite
+
+User accepts the invitation and completes onboarding:
+
+<RequestExample>
+```bash
+curl -X POST "https://api.rise.works/v2/invites/inv_123456789/accept" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "wallet_address": "0x1234567890abcdef...",
+    "user_info": {
+      "first_name": "John",
+      "last_name": "Doe",
+      "email": "john.doe@company.com"
+    }
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "user_nanoid": "user_123456789",
+    "riseid": "rise_123456789",
+    "team_nanoid": "team_123",
+    "role": "team_employee",
+    "permissions": ["pay", "view"],
+    "onboarding_complete": true
+  }
+}
+```
+</ResponseExample>
+
+## React Hook for Invites
+
+```typescript
+import { useState } from 'react';
+
+interface UseRiseInvites {
+  loading: boolean;
+  error: string | null;
+  createInvite: (inviteData: InviteData) => Promise<InviteResponse>;
+  sendInviteEmail: (inviteId: string, message?: string) => Promise<any>;
+  cancelInvite: (inviteId: string) => Promise<any>;
+}
+
+export function useRiseInvites(jwtToken: string): UseRiseInvites {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const createInvite = async (inviteData: InviteData): Promise<InviteResponse> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const invites = new RiseInvites('https://api.rise.works', jwtToken);
+      const result = await invites.createInvite(inviteData);
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create invite';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendInviteEmail = async (inviteId: string, message: string = '') => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const invites = new RiseInvites('https://api.rise.works', jwtToken);
+      const result = await invites.sendInviteEmail(inviteId, message);
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send invite';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cancelInvite = async (inviteId: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const invites = new RiseInvites('https://api.rise.works', jwtToken);
+      const result = await invites.cancelInvite(inviteId);
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to cancel invite';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { loading, error, createInvite, sendInviteEmail, cancelInvite };
+}
+```
+
+## Invite Management Component
+
+```typescript
+import React, { useState, useEffect } from 'react';
+import { useRiseInvites } from './useRiseInvites';
+
+interface InviteManagementProps {
+  teamNanoid: string;
+  jwtToken: string;
+}
+
+export function InviteManagement({ teamNanoid, jwtToken }: InviteManagementProps) {
+  const { loading, error, createInvite, sendInviteEmail, cancelInvite } = useRiseInvites(jwtToken);
+  const [invites, setInvites] = useState([]);
+  const [newInvite, setNewInvite] = useState({
+    email: '',
+    role: 'team_employee',
+    permissions: ['pay', 'view'],
+    message: ''
+  });
+
+  const handleCreateInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const result = await createInvite({
+        team_nanoid: teamNanoid,
+        ...newInvite
+      });
+      
+      // Refresh invites list
+      fetchInvites();
+      
+      // Reset form
+      setNewInvite({
+        email: '',
+        role: 'team_employee',
+        permissions: ['pay', 'view'],
+        message: ''
+      });
+    } catch (err) {
+      console.error('Failed to create invite:', err);
+    }
+  };
+
+  const handleResendInvite = async (inviteId: string) => {
+    try {
+      await sendInviteEmail(inviteId, 'Reminder: Please accept your invitation');
+      alert('Invitation resent successfully!');
+    } catch (err) {
+      console.error('Failed to resend invite:', err);
+    }
+  };
+
+  const handleCancelInvite = async (inviteId: string) => {
+    if (confirm('Are you sure you want to cancel this invitation?')) {
+      try {
+        await cancelInvite(inviteId);
+        fetchInvites(); // Refresh list
+      } catch (err) {
+        console.error('Failed to cancel invite:', err);
+      }
+    }
+  };
+
+  return (
+    <div className="invite-management">
+      <h2>Team Invitations</h2>
+      
+      {/* Create New Invite Form */}
+      <form onSubmit={handleCreateInvite}>
+        <input
+          type="email"
+          placeholder="Email address"
+          value={newInvite.email}
+          onChange={(e) => setNewInvite({...newInvite, email: e.target.value})}
+          required
+        />
+        
+        <select
+          value={newInvite.role}
+          onChange={(e) => setNewInvite({...newInvite, role: e.target.value})}
+        >
+          <option value="team_employee">Team Employee</option>
+          <option value="team_admin">Team Admin</option>
+          <option value="team_finance_admin">Finance Admin</option>
+          <option value="team_viewer">Viewer</option>
+        </select>
+        
+        <textarea
+          placeholder="Personal message (optional)"
+          value={newInvite.message}
+          onChange={(e) => setNewInvite({...newInvite, message: e.target.value})}
+        />
+        
+        <button type="submit" disabled={loading}>
+          {loading ? 'Creating...' : 'Send Invitation'}
+        </button>
+      </form>
+
+      {/* Invites List */}
+      <div className="invites-list">
+        <h3>Pending Invitations</h3>
+        {invites.map(invite => (
+          <div key={invite.invite_id} className="invite-item">
+            <div>
+              <strong>{invite.email}</strong>
+              <span className="role">{invite.role}</span>
+              <span className="status">{invite.status}</span>
+            </div>
+            <div className="actions">
+              <button onClick={() => handleResendInvite(invite.invite_id)}>
+                Resend
+              </button>
+              <button onClick={() => handleCancelInvite(invite.invite_id)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {error && <div className="error">{error}</div>}
+    </div>
+  );
+}
+```
+
+## Bulk Invite System
+
+For onboarding multiple users at once:
+
+```typescript
+interface BulkInviteData {
+  team_nanoid: string;
+  invites: Array<{
+    email: string;
+    role: string;
+    permissions: string[];
+    message?: string;
+  }>;
+}
+
+class BulkInviteSystem {
+  private invites: RiseInvites;
+
+  constructor(jwtToken: string) {
+    this.invites = new RiseInvites('https://api.rise.works', jwtToken);
+  }
+
+  async sendBulkInvites(bulkData: BulkInviteData) {
+    const results = [];
+    const errors = [];
+
+    for (const inviteData of bulkData.invites) {
+      try {
+        const result = await this.invites.createInvite({
+          team_nanoid: bulkData.team_nanoid,
+          ...inviteData
+        });
+        
+        // Send email immediately
+        await this.invites.sendInviteEmail(result.data.invite_id, inviteData.message);
+        
+        results.push(result);
+      } catch (error) {
+        errors.push({
+          email: inviteData.email,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+
+    return { results, errors };
+  }
+}
+```
+
+## Error Handling
+
+Common invite errors and solutions:
+
+| Error Code | Description | Solution |
+|------------|-------------|----------|
+| `INVALID_EMAIL` | Email format is invalid | Ensure email follows valid format |
+| `INVALID_ROLE` | Role is not supported | Use one of the supported roles |
+| `INSUFFICIENT_PERMISSIONS` | User lacks permission to invite | Check user's team permissions |
+| `INVITE_EXPIRED` | Invitation has expired | Create a new invitation |
+| `USER_ALREADY_MEMBER` | User is already a team member | Check existing team membership |
+| `INVITE_LIMIT_EXCEEDED` | Too many pending invites | Cancel old invites or wait |
+
+## Best Practices
+
+<Warning>
+  **Always verify email addresses** before sending invitations to prevent spam and ensure delivery.
+</Warning>
+
+- **Role Assignment**: Assign the minimum required role for security
+- **Invite Expiration**: Set appropriate expiration times (default: 30 days)
+- **Follow-up**: Send reminder emails for pending invitations
+- **Cleanup**: Regularly cancel expired invitations
+- **Audit**: Log all invite activities for compliance
+
+## Testing Invites
+
+For testing, use the development environment:
+
+<CodeGroup>
+
+```javascript
+// Development configuration
+const DEV_CONFIG = {
+  baseUrl: 'https://api-dev.rise.works',
+  testEmail: 'test@example.com'
+};
+
+// Test invite flow
+const testInvite = async () => {
+  const invites = new RiseInvites(DEV_CONFIG.baseUrl, jwtToken);
+  
+  const result = await invites.createInvite({
+    team_nanoid: 'test_team_123',
+    email: DEV_CONFIG.testEmail,
+    role: 'team_employee',
+    permissions: ['view']
+  });
+  
+  console.log('Test invite created:', result.data.invite_url);
+};
+```
+
+```typescript
+interface TestConfig {
+  baseUrl: string;
+  testEmail: string;
+}
+
+const DEV_CONFIG: TestConfig = {
+  baseUrl: 'https://api-dev.rise.works',
+  testEmail: 'test@example.com'
+};
+
+const testInvite = async (jwtToken: string) => {
+  const invites = new RiseInvites(DEV_CONFIG.baseUrl, jwtToken);
+  
+  const result = await invites.createInvite({
+    team_nanoid: 'test_team_123',
+    email: DEV_CONFIG.testEmail,
+    role: 'team_employee',
+    permissions: ['view']
+  });
+  
+  console.log('Test invite created:', result.data.invite_url);
+};
+```
+
+</CodeGroup> 

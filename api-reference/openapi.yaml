@@ -1,0 +1,4909 @@
+openapi: 3.0.3
+info:
+  title: Rise
+  description: Web3-enabled payroll and compliance for the modern workforce
+  version: 2.0.0
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    v1Auth:
+      type: apiKey
+      name: X-Auth-Token
+      in: header
+      description: JWT token
+  schemas: {}
+paths:
+  /v2/auth/siwe:
+    get:
+      summary: Get SIWE
+      tags:
+        - Authentication
+      description: Retrieves a SIWE (Sign-In with Ethereum) message that can be used
+        for authentication. This message is signed by the user to prove their
+        identity.
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: wallet
+          required: true
+          description: Wallet address of the user.
+        - schema:
+            type: string
+          in: query
+          name: riseid
+          required: true
+          description: RiseID of the user.
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      siwe:
+                        type: string
+                        description: The SIWE message that the user needs to sign.
+                    required:
+                      - siwe
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+  /v2/auth/verify:
+    post:
+      summary: Verify a SIWE message and return a JWT for API authentication
+      tags:
+        - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: The original SIWE message that was signed by the user.
+                sig:
+                  type: string
+                  description: The signature generated by the user when signing the SIWE message.
+                nonce:
+                  type: string
+                  description: A unique nonce to prevent replay attacks.
+              required:
+                - message
+                - sig
+                - nonce
+              additionalProperties: false
+        required: true
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      jwt:
+                        type: string
+                        description: The JSON Web Token (JWT) for authenticated API requests.
+                    required:
+                      - jwt
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+  /v2/balance:
+    get:
+      summary: Get entity balance
+      tags:
+        - Balance
+      description: Retrieves balance and details of an entity using their nanoid (te-
+        for team, co- for company, us- for user).
+      parameters:
+        - schema:
+            type: string
+            pattern: ^(te-|co-|us-)
+          in: query
+          name: nanoid
+          required: true
+          description: Nanoid of the entity to retrieve.
+        - schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - USD
+                - EUR
+          in: query
+          name: currencies
+          required: false
+          description: Optional array of currencies to retrieve balances for. If not
+            provided, returns all supported currencies.
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      rise_account_address:
+                        type: string
+                        pattern: ^0x[a-fA-F0-9]{40}$
+                        description: Rise account address.
+                      balances:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            currency:
+                              type: string
+                              enum:
+                                - USD
+                                - EUR
+                              description: Currency code.
+                            balance_cents:
+                              type: integer
+                              description: Balance in cents.
+                          required:
+                            - currency
+                            - balance_cents
+                          additionalProperties: false
+                        description: Array of balances for different currencies.
+                    required:
+                      - rise_account_address
+                      - balances
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+  /v2/invites:
+    get:
+      summary: Get Invites
+      tags:
+        - Invites
+      description: List all pending invites for a company or team. User must be
+        team_admin for teams or org_admin for companies.
+      parameters:
+        - schema:
+            anyOf:
+              - type: string
+                minLength: 15
+                maxLength: 15
+                pattern: ^te\-
+                description: TeamNanoid
+              - type: string
+                minLength: 15
+                maxLength: 15
+                pattern: ^co\-
+                description: CompanyNanoid
+          in: query
+          name: nanoid
+          required: true
+          description: The nanoid of the company or team to get invites for
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        nanoid:
+                          type: string
+                        role:
+                          type: string
+                          enum:
+                            - contractor
+                            - org_admin
+                            - org_finance_admin
+                            - org_viewer
+                            - team_admin
+                            - team_employee
+                            - team_finance_admin
+                            - team_viewer
+                          nullable: true
+                        invitee_name:
+                          type: string
+                          minLength: 1
+                        email:
+                          type: string
+                          format: email
+                        inviter_name:
+                          type: string
+                          minLength: 1
+                        inviter_email:
+                          type: string
+                          format: email
+                        company:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              minLength: 1
+                            avatar:
+                              type: string
+                          required:
+                            - name
+                            - avatar
+                          additionalProperties: false
+                        team:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              minLength: 1
+                            avatar:
+                              type: string
+                          required:
+                            - name
+                            - avatar
+                          additionalProperties: false
+                      required:
+                        - nanoid
+                        - role
+                        - invitee_name
+                        - email
+                        - inviter_name
+                        - inviter_email
+                      additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+    post:
+      summary: Create invites for employees and contractors
+      tags:
+        - Invites
+      description: Create invites/warm invites for employees and contractors. This is
+        used to invite users to team.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nanoid:
+                  type: string
+                  minLength: 15
+                  maxLength: 15
+                  pattern: ^te\-
+                  description: TeamNanoid
+                invites:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+                        format: email
+                      prefill:
+                        type: object
+                        properties:
+                          first_name:
+                            type: string
+                          last_name:
+                            type: string
+                          phone:
+                            type: string
+                          company_name:
+                            type: string
+                          job_title:
+                            type: string
+                          company_size:
+                            type: string
+                          company_website:
+                            type: string
+                          company_industry:
+                            type: string
+                          company_address:
+                            type: string
+                          company_city:
+                            type: string
+                          company_state:
+                            type: string
+                          company_zip:
+                            type: string
+                          company_country:
+                            type: string
+                        required:
+                          - first_name
+                          - last_name
+                          - phone
+                          - company_name
+                          - job_title
+                          - company_size
+                          - company_website
+                          - company_industry
+                          - company_address
+                          - company_city
+                          - company_state
+                          - company_zip
+                          - company_country
+                        additionalProperties: false
+                    required:
+                      - email
+                    additionalProperties: false
+                role:
+                  type: string
+                  enum:
+                    - contractor
+                    - team_employee
+                anonymous:
+                  type: boolean
+              required:
+                - nanoid
+                - invites
+                - role
+              additionalProperties: false
+        required: true
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      nanoids:
+                        type: array
+                        items:
+                          type: string
+                    required:
+                      - nanoids
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+  /v2/invites/manager:
+    post:
+      summary: Create admin invites typed data
+      tags:
+        - Invites
+      description: Create admin invites for a company or team. This is used to invite
+        users to the company or team.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emails:
+                  type: array
+                  items:
+                    type: string
+                    format: email
+                  minItems: 1
+                  maxItems: 100
+                role:
+                  anyOf:
+                    - type: string
+                      enum:
+                        - team_admin
+                        - team_finance_admin
+                        - team_viewer
+                    - type: string
+                      enum:
+                        - org_admin
+                        - org_finance_admin
+                        - org_viewer
+                nanoid:
+                  anyOf:
+                    - type: string
+                      minLength: 15
+                      maxLength: 15
+                      pattern: ^te\-
+                      description: TeamNanoid
+                    - type: string
+                      minLength: 15
+                      maxLength: 15
+                      pattern: ^co\-
+                      description: CompanyNanoid
+                  description: TeamNanoid
+              required:
+                - emails
+                - role
+                - nanoid
+              additionalProperties: false
+        required: true
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      invites:
+                        type: array
+                        items:
+                          type: string
+                          minLength: 15
+                          maxLength: 15
+                          pattern: ^in\-
+                      typed_data:
+                        type: object
+                        properties:
+                          domain:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              version:
+                                type: string
+                              chainId:
+                                type: number
+                              verifyingContract:
+                                type: string
+                                pattern: ^0x[a-fA-F0-9]{40}$
+                            required:
+                              - name
+                              - version
+                              - chainId
+                              - verifyingContract
+                            additionalProperties: false
+                          types:
+                            type: object
+                            properties:
+                              SetRolesForwardRequest:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    name:
+                                      type: string
+                                    type:
+                                      type: string
+                                  required:
+                                    - name
+                                    - type
+                                  additionalProperties: false
+                              SetRole:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    name:
+                                      type: string
+                                    type:
+                                      type: string
+                                  required:
+                                    - name
+                                    - type
+                                  additionalProperties: false
+                            required:
+                              - SetRolesForwardRequest
+                              - SetRole
+                            additionalProperties: false
+                          typed_data:
+                            type: object
+                            properties:
+                              from:
+                                type: string
+                                pattern: ^0x[a-fA-F0-9]{40}$
+                              to:
+                                type: string
+                                pattern: ^0x[a-fA-F0-9]{40}$
+                              salt:
+                                type: string
+                              expires:
+                                type: string
+                              data:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    role:
+                                      type: string
+                                    account:
+                                      type: string
+                                      pattern: ^0x[a-fA-F0-9]{40}$
+                                  required:
+                                    - role
+                                    - account
+                                  additionalProperties: false
+                            required:
+                              - from
+                              - to
+                              - salt
+                              - expires
+                              - data
+                            additionalProperties: false
+                          primary_type:
+                            type: string
+                        required:
+                          - domain
+                          - types
+                          - typed_data
+                          - primary_type
+                        additionalProperties: false
+                    required:
+                      - invites
+                      - typed_data
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+    put:
+      summary: Execute admin invites
+      tags:
+        - Invites
+      description: Execute admin invites for a company or team. This is used to
+        execute admin invites for a company or team.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                invites:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 15
+                    maxLength: 15
+                    pattern: ^in\-
+                signer:
+                  type: string
+                  pattern: ^0x[a-fA-F0-9]{40}$
+                typed_data:
+                  type: object
+                  properties:
+                    from:
+                      type: string
+                      pattern: ^0x[a-fA-F0-9]{40}$
+                    to:
+                      type: string
+                      pattern: ^0x[a-fA-F0-9]{40}$
+                    salt:
+                      type: string
+                    expires:
+                      type: string
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          role:
+                            type: string
+                          account:
+                            type: string
+                            pattern: ^0x[a-fA-F0-9]{40}$
+                        required:
+                          - role
+                          - account
+                        additionalProperties: false
+                  required:
+                    - from
+                    - to
+                    - salt
+                    - expires
+                    - data
+                  additionalProperties: false
+                signature:
+                  type: string
+                  pattern: ^0x[a-fA-F0-9]{130}$
+              required:
+                - invites
+                - signer
+                - typed_data
+                - signature
+              additionalProperties: false
+        required: true
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      invites:
+                        type: array
+                        items:
+                          type: string
+                          minLength: 15
+                          maxLength: 15
+                          pattern: ^in\-
+                      transaction:
+                        type: string
+                        minLength: 15
+                        maxLength: 15
+                        pattern: ^tx\-
+                    required:
+                      - invites
+                      - transaction
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+  /v2/payments:
+    get:
+      summary: Query Payments
+      tags:
+        - Payments
+      description: Query payments for a team, optionally filtered by recipient and
+        date range.
+      parameters:
+        - schema:
+            type: string
+            minLength: 15
+            maxLength: 15
+            pattern: ^te\-
+          in: query
+          name: team_nanoid
+          required: true
+          description: TeamNanoid
+        - schema:
+            type: string
+            enum:
+              - all
+              - intent
+              - scheduled
+              - complete
+          in: query
+          name: state
+          required: true
+        - schema:
+            allOf:
+              - anyOf:
+                  - type: number
+                  - type: string
+                  - type: string
+                    format: date-time
+              - type: string
+                format: date-time
+          in: query
+          name: start_date
+          required: true
+        - schema:
+            allOf:
+              - anyOf:
+                  - type: number
+                  - type: string
+                  - type: string
+                    format: date-time
+              - type: string
+                format: date-time
+          in: query
+          name: end_date
+          required: true
+        - schema:
+            type: string
+            enum:
+              - payable
+              - receivable
+          in: query
+          name: query_type
+          required: true
+        - schema:
+            type: string
+            minLength: 15
+            maxLength: 15
+            pattern: ^us\-
+          in: query
+          name: recipient
+          required: false
+          description: UserNanoid
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            recipient:
+                              type: object
+                              properties:
+                                nanoid:
+                                  anyOf:
+                                    - type: string
+                                      minLength: 15
+                                      maxLength: 15
+                                      pattern: ^us\-
+                                      description: UserNanoid
+                                    - type: string
+                                      minLength: 15
+                                      maxLength: 15
+                                      pattern: ^co\-
+                                      description: CompanyNanoid
+                                  description: UserNanoid
+                                riseid:
+                                  type: string
+                                  minLength: 42
+                                  maxLength: 42
+                                avatar:
+                                  type: string
+                                first_name:
+                                  type: string
+                                  nullable: true
+                                middle_name:
+                                  type: string
+                                  nullable: true
+                                last_name:
+                                  type: string
+                                  nullable: true
+                                company_name:
+                                  type: string
+                                  nullable: true
+                                email:
+                                  type: string
+                                  nullable: true
+                                address:
+                                  type: object
+                                  properties:
+                                    country:
+                                      type: string
+                                      pattern: ^[A-Z]{2}$
+                                    state:
+                                      type: string
+                                    city:
+                                      type: string
+                                    line_1:
+                                      type: string
+                                    line_2:
+                                      type: string
+                                      nullable: true
+                                    zip_code:
+                                      type: string
+                                  required:
+                                    - country
+                                    - state
+                                    - city
+                                    - line_1
+                                    - zip_code
+                                  additionalProperties: false
+                              required:
+                                - nanoid
+                                - riseid
+                                - avatar
+                                - first_name
+                                - middle_name
+                                - last_name
+                                - company_name
+                                - email
+                                - address
+                              additionalProperties: false
+                            payer:
+                              type: object
+                              properties:
+                                nanoid:
+                                  type: string
+                                  minLength: 15
+                                  maxLength: 15
+                                  pattern: ^te\-
+                                  description: TeamNanoid
+                                riseid:
+                                  type: string
+                                  minLength: 42
+                                  maxLength: 42
+                                avatar:
+                                  type: string
+                                name:
+                                  type: string
+                              required:
+                                - nanoid
+                                - riseid
+                                - avatar
+                                - name
+                              additionalProperties: false
+                            invoice:
+                              type: object
+                              properties:
+                                amount_cents:
+                                  type: number
+                                  default: 0
+                                created_at:
+                                  allOf:
+                                    - anyOf:
+                                        - type: number
+                                        - type: string
+                                        - type: string
+                                          format: date-time
+                                    - type: string
+                                      format: date-time
+                                currency:
+                                  type: string
+                                  minLength: 1
+                                documents_ids:
+                                  type: array
+                                  items:
+                                    type: string
+                                external_sow_url:
+                                  type: string
+                                  nullable: true
+                                flat_type:
+                                  type: string
+                                  enum:
+                                    - product
+                                    - reimbursement
+                                    - service
+                                  nullable: true
+                                group_nanoid:
+                                  type: string
+                                  minLength: 15
+                                  maxLength: 15
+                                  pattern: ^pg\-
+                                  description: PaymentGroupNanoid
+                                group_onchain_id:
+                                  type: string
+                                  minLength: 1
+                                hourly_rate_usd_cents:
+                                  type: number
+                                invoice_description:
+                                  type: string
+                                  nullable: true
+                                invoice_number:
+                                  type: string
+                                  nullable: true
+                                  default: ""
+                                invoice_status:
+                                  type: string
+                                  enum:
+                                    - canceled
+                                    - closed
+                                    - draft
+                                    - open
+                                    - open_canceled
+                                  default: draft
+                                nanoid:
+                                  type: string
+                                  minLength: 15
+                                  maxLength: 15
+                                  pattern: ^iv\-
+                                  description: InvoiceNanoid
+                                pay_intent_time:
+                                  type: number
+                                  default: 0
+                                payer_nanoid:
+                                  type: string
+                                  minLength: 15
+                                  maxLength: 15
+                                  pattern: ^te\-
+                                  description: TeamNanoid
+                                payroll_program:
+                                  type: string
+                                  enum:
+                                    - riseworks_eor_us
+                                    - riseworks_inc
+                                    - riseworks_pps_us
+                                  nullable: true
+                                recipient_nanoid:
+                                  anyOf:
+                                    - type: string
+                                      minLength: 15
+                                      maxLength: 15
+                                      pattern: ^us\-
+                                      description: UserNanoid
+                                    - type: string
+                                      minLength: 15
+                                      maxLength: 15
+                                      pattern: ^co\-
+                                      description: CompanyNanoid
+                                  description: UserNanoid
+                                recurrence:
+                                  type: string
+                                  enum:
+                                    - annually
+                                    - bi_monthly
+                                    - bi_weekly
+                                    - daily
+                                    - four_weeks
+                                    - monthly
+                                    - quartely
+                                    - six_months
+                                    - weekly
+                                  nullable: true
+                                rise_sow:
+                                  allOf:
+                                    - anyOf:
+                                        - type: number
+                                        - type: string
+                                        - type: boolean
+                                    - type: boolean
+                                role_description:
+                                  type: string
+                                  nullable: true
+                                sow_document_nanoid:
+                                  type: string
+                                  nullable: true
+                                time_entries:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      date:
+                                        type: string
+                                      hours:
+                                        type: integer
+                                      minutes:
+                                        type: integer
+                                      notes:
+                                        type: string
+                                    required:
+                                      - date
+                                      - hours
+                                      - minutes
+                                      - notes
+                                    additionalProperties: false
+                                type:
+                                  type: string
+                                  enum:
+                                    - batch
+                                    - flat
+                                    - milestone
+                                    - paynow
+                                    - payonce
+                                    - payroll_cash_requirement
+                                    - recurring
+                                    - time_entry
+                                updated_at:
+                                  allOf:
+                                    - anyOf:
+                                        - type: number
+                                        - type: string
+                                        - type: string
+                                          format: date-time
+                                    - type: string
+                                      format: date-time
+                              required:
+                                - currency
+                                - documents_ids
+                                - group_nanoid
+                                - group_onchain_id
+                                - hourly_rate_usd_cents
+                                - nanoid
+                                - payer_nanoid
+                                - recipient_nanoid
+                                - rise_sow
+                                - time_entries
+                                - type
+                              additionalProperties: false
+                            payment:
+                              type: object
+                              properties:
+                                created_at:
+                                  allOf:
+                                    - anyOf:
+                                        - type: number
+                                        - type: string
+                                        - type: string
+                                          format: date-time
+                                    - type: string
+                                      format: date-time
+                                creation_transaction:
+                                  type: string
+                                  minLength: 15
+                                  maxLength: 15
+                                  pattern: ^tx\-
+                                  nullable: true
+                                group_onchain_id:
+                                  type: string
+                                  minLength: 1
+                                invoice_nanoid:
+                                  type: string
+                                  minLength: 15
+                                  maxLength: 15
+                                  pattern: ^iv\-
+                                  description: InvoiceNanoid
+                                nanoid:
+                                  type: string
+                                  minLength: 15
+                                  maxLength: 15
+                                  pattern: ^pa\-
+                                  description: PaymentNanoid
+                                onchain_id:
+                                  type: string
+                                  minLength: 1
+                                payment_group_nanoid:
+                                  type: string
+                                  minLength: 15
+                                  maxLength: 15
+                                  pattern: ^pg\-
+                                  description: PaymentGroupNanoid
+                                process_transaction:
+                                  type: string
+                                  minLength: 15
+                                  maxLength: 15
+                                  pattern: ^tx\-
+                                  nullable: true
+                                updated_at:
+                                  allOf:
+                                    - anyOf:
+                                        - type: number
+                                        - type: string
+                                        - type: string
+                                          format: date-time
+                                    - type: string
+                                      format: date-time
+                                state:
+                                  type: string
+                                  enum:
+                                    - Undefined
+                                    - Intent
+                                    - Scheduled
+                                    - Complete
+                                    - Removed
+                                pay_at_time:
+                                  type: integer
+                                token_amount:
+                                  type: string
+                                amount_cents:
+                                  type: integer
+                                currency_symbol:
+                                  type: string
+                                token_decimals:
+                                  type: integer
+                                valid_minutes:
+                                  type: integer
+                              required:
+                                - creation_transaction
+                                - group_onchain_id
+                                - invoice_nanoid
+                                - nanoid
+                                - onchain_id
+                                - payment_group_nanoid
+                                - process_transaction
+                                - state
+                                - pay_at_time
+                                - token_amount
+                                - amount_cents
+                                - currency_symbol
+                                - token_decimals
+                                - valid_minutes
+                              additionalProperties: false
+                          required:
+                            - recipient
+                            - payer
+                            - invoice
+                            - payment
+                          additionalProperties: false
+                    required:
+                      - items
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+    post:
+      summary: Create typed data for payments
+      tags:
+        - Payments
+      description: Create typed data for payments. The typed data can be signed and
+        then executed to create the payments on-chain.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from:
+                  type: string
+                  minLength: 15
+                  maxLength: 15
+                  pattern: ^te\-
+                  description: TeamNanoid
+                to:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      to:
+                        type: string
+                        minLength: 15
+                        maxLength: 15
+                        pattern: ^us\-
+                        description: UserNanoid
+                      amount_cents:
+                        type: integer
+                        minimum: 100
+                        maximum: 10000000000
+                      currency_symbol:
+                        type: string
+                        enum:
+                          - USD
+                        default: USD
+                      invoice_description:
+                        type: string
+                        maxLength: 5000
+                    required:
+                      - to
+                      - amount_cents
+                    additionalProperties: false
+                pay_now:
+                  type: boolean
+                network:
+                  type: string
+                  enum:
+                    - ethereum
+                    - arbitrum
+                    - base
+                    - polygon
+                    - avalanche
+                    - optimism
+                  default: arbitrum
+              required:
+                - from
+                - to
+                - pay_now
+              additionalProperties: false
+        required: true
+      parameters:
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-token
+          required: true
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-action
+          required: true
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      domain:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          version:
+                            type: string
+                          chainId:
+                            type: number
+                          verifyingContract:
+                            type: string
+                            pattern: ^0x[a-fA-F0-9]{40}$
+                        required:
+                          - name
+                          - version
+                          - chainId
+                          - verifyingContract
+                        additionalProperties: false
+                      types:
+                        type: object
+                        properties:
+                          CreatePaymentsForwardRequest:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                type:
+                                  type: string
+                              required:
+                                - name
+                                - type
+                              additionalProperties: false
+                          RisePaymentsRequest:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                type:
+                                  type: string
+                              required:
+                                - name
+                                - type
+                              additionalProperties: false
+                          RisePayment:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                type:
+                                  type: string
+                              required:
+                                - name
+                                - type
+                              additionalProperties: false
+                        required:
+                          - CreatePaymentsForwardRequest
+                          - RisePaymentsRequest
+                          - RisePayment
+                        additionalProperties: false
+                      typed_data:
+                        type: object
+                        properties:
+                          from:
+                            type: string
+                            pattern: ^0x[a-fA-F0-9]{40}$
+                          to:
+                            type: string
+                            pattern: ^0x[a-fA-F0-9]{40}$
+                          salt:
+                            type: string
+                          expires:
+                            type: string
+                          data:
+                            type: object
+                            properties:
+                              payments:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    id:
+                                      type: string
+                                    groupID:
+                                      type: string
+                                    payAtTime:
+                                      type: string
+                                    validMinutes:
+                                      type: string
+                                    payType:
+                                      type: string
+                                    token:
+                                      type: string
+                                      pattern: ^0x[a-fA-F0-9]{40}$
+                                    recipient:
+                                      type: string
+                                      pattern: ^0x[a-fA-F0-9]{40}$
+                                    amount:
+                                      type: string
+                                    data:
+                                      type: string
+                                  required:
+                                    - id
+                                    - groupID
+                                    - payAtTime
+                                    - validMinutes
+                                    - payType
+                                    - token
+                                    - recipient
+                                    - amount
+                                    - data
+                                  additionalProperties: false
+                            required:
+                              - payments
+                            additionalProperties: false
+                        required:
+                          - from
+                          - to
+                          - salt
+                          - expires
+                          - data
+                        additionalProperties: false
+                      primary_type:
+                        type: string
+                    required:
+                      - domain
+                      - types
+                      - typed_data
+                      - primary_type
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+    put:
+      summary: Execute Payments
+      tags:
+        - Payments
+      description: Execute payments by signing the typed data and sending the
+        signature along with the request.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from:
+                  type: string
+                  minLength: 15
+                  maxLength: 15
+                  pattern: ^te\-
+                  description: TeamNanoid
+                to:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      to:
+                        type: string
+                        minLength: 15
+                        maxLength: 15
+                        pattern: ^us\-
+                        description: UserNanoid
+                      amount_cents:
+                        type: integer
+                        minimum: 100
+                        maximum: 10000000000
+                      currency_symbol:
+                        type: string
+                        enum:
+                          - USD
+                        default: USD
+                      invoice_description:
+                        type: string
+                        maxLength: 5000
+                    required:
+                      - to
+                      - amount_cents
+                    additionalProperties: false
+                pay_now:
+                  type: boolean
+                network:
+                  type: string
+                  enum:
+                    - ethereum
+                    - arbitrum
+                    - base
+                    - polygon
+                    - avalanche
+                    - optimism
+                  default: arbitrum
+                signer:
+                  type: string
+                  pattern: ^0x[a-fA-F0-9]{40}$
+                typed_data:
+                  type: object
+                  properties:
+                    from:
+                      type: string
+                      pattern: ^0x[a-fA-F0-9]{40}$
+                    to:
+                      type: string
+                      pattern: ^0x[a-fA-F0-9]{40}$
+                    salt:
+                      type: string
+                    expires:
+                      type: string
+                    data:
+                      type: object
+                      properties:
+                        payments:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              groupID:
+                                type: string
+                              payAtTime:
+                                type: string
+                              validMinutes:
+                                type: string
+                              payType:
+                                type: string
+                              token:
+                                type: string
+                                pattern: ^0x[a-fA-F0-9]{40}$
+                              recipient:
+                                type: string
+                                pattern: ^0x[a-fA-F0-9]{40}$
+                              amount:
+                                type: string
+                              data:
+                                type: string
+                            required:
+                              - id
+                              - groupID
+                              - payAtTime
+                              - validMinutes
+                              - payType
+                              - token
+                              - recipient
+                              - amount
+                              - data
+                            additionalProperties: false
+                      required:
+                        - payments
+                      additionalProperties: false
+                  required:
+                    - from
+                    - to
+                    - salt
+                    - expires
+                    - data
+                  additionalProperties: false
+                signature:
+                  type: string
+                  pattern: ^0x[a-fA-F0-9]{130}$
+              required:
+                - from
+                - to
+                - pay_now
+                - signer
+                - typed_data
+                - signature
+              additionalProperties: false
+        required: true
+      parameters:
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-token
+          required: true
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-action
+          required: true
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      transaction:
+                        type: string
+                        minLength: 15
+                        maxLength: 15
+                        pattern: ^tx\-
+                      payments:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            groupID:
+                              type: string
+                            payAtTime:
+                              type: string
+                            validMinutes:
+                              type: string
+                            payType:
+                              type: string
+                            token:
+                              type: string
+                              pattern: ^0x[a-fA-F0-9]{40}$
+                            recipient:
+                              type: string
+                              pattern: ^0x[a-fA-F0-9]{40}$
+                            amount:
+                              type: string
+                            data:
+                              type: string
+                          required:
+                            - id
+                            - groupID
+                            - payAtTime
+                            - validMinutes
+                            - payType
+                            - token
+                            - recipient
+                            - amount
+                            - data
+                          additionalProperties: false
+                    required:
+                      - transaction
+                      - payments
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+  /v2/teams/{team_nanoid}/users:
+    get:
+      summary: Get team users
+      tags:
+        - Team Management
+      description: Retrieves a list of users associated with the specified team
+        identified by its nanoid. This endpoint is useful for obtaining user
+        details for a specific team, including their names and email addresses.
+      parameters:
+        - schema:
+            type: string
+            minLength: 15
+            maxLength: 15
+            pattern: ^te\-
+          in: path
+          name: team_nanoid
+          required: true
+          description: Unique identifier of the team for which to retrieve users.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      users:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            nanoid:
+                              type: string
+                              minLength: 15
+                              maxLength: 15
+                              pattern: ^us\-
+                              description: Unique identifier for the user.
+                            first_name:
+                              type: string
+                              description: User's first name.
+                            last_name:
+                              type: string
+                              description: User's last name.
+                            email:
+                              type: string
+                              description: User's email address.
+                            role:
+                              type: string
+                              description: User's team role.
+                            rise_account:
+                              type: string
+                              pattern: ^0x[a-fA-F0-9]{40}$
+                              description: User's rise account.
+                            riseid:
+                              type: string
+                              minLength: 42
+                              maxLength: 42
+                              description: User's riseid.
+                            avatar:
+                              type: string
+                              description: User's avatar URL.
+                            address:
+                              type: object
+                              properties:
+                                line_1:
+                                  type: string
+                                  description: Primary address line
+                                line_2:
+                                  type: string
+                                  description: Secondary address line
+                                city:
+                                  type: string
+                                  description: City of the company
+                                state:
+                                  type: string
+                                  description: State or region
+                                country:
+                                  type: string
+                                  description: Country of the company
+                                zip_code:
+                                  type: string
+                                  description: Postal code
+                              required:
+                                - line_1
+                                - line_2
+                                - city
+                                - state
+                                - country
+                                - zip_code
+                              additionalProperties: false
+                          required:
+                            - nanoid
+                            - first_name
+                            - last_name
+                            - email
+                            - role
+                            - rise_account
+                            - riseid
+                            - avatar
+                            - address
+                          additionalProperties: false
+                    required:
+                      - users
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+  /v2/teams/{team_nanoid}/settings:
+    get:
+      summary: Get team settings
+      tags:
+        - Team Management
+      parameters:
+        - schema:
+            type: string
+            minLength: 15
+            maxLength: 15
+            pattern: ^te\-
+          in: path
+          name: team_nanoid
+          required: true
+          description: TeamNanoid
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      payment_delay_in_minutes:
+                        type: number
+                    required:
+                      - payment_delay_in_minutes
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+    put:
+      summary: Update team settings
+      tags:
+        - Team Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payment_delay_in_minutes:
+                  type: number
+              required:
+                - payment_delay_in_minutes
+              additionalProperties: false
+        required: true
+      parameters:
+        - schema:
+            type: string
+            minLength: 15
+            maxLength: 15
+            pattern: ^te\-
+          in: path
+          name: team_nanoid
+          required: true
+          description: TeamNanoid
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-token
+          required: true
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-action
+          required: true
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                required:
+                  - success
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+  /v2/teams/{team_nanoid}:
+    get:
+      summary: Get team by nanoid
+      tags:
+        - Team Management
+      parameters:
+        - schema:
+            type: string
+            minLength: 15
+            maxLength: 15
+            pattern: ^te\-
+          in: path
+          name: team_nanoid
+          required: true
+          description: TeamNanoid
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      nanoid:
+                        type: string
+                        description: Unique identifier for the team.
+                      name:
+                        type: string
+                        minLength: 1
+                        description: Name of the team.
+                      avatar:
+                        type: string
+                        description: URL of the team avatar.
+                      balance:
+                        type: string
+                        description: Current balance of the team.
+                      administrators:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            relationship_nanoid:
+                              type: string
+                              description: Unique identifier for the relationship of the administrator.
+                            user_nanoid:
+                              type: string
+                              description: Unique identifier for the user.
+                            avatar:
+                              type: string
+                              description: URL of the administrator's avatar.
+                            first_name:
+                              type: string
+                              description: First name of the administrator.
+                            last_name:
+                              type: string
+                              description: Last name of the administrator.
+                            email:
+                              type: string
+                              description: Email address of the administrator.
+                            type:
+                              type: string
+                              enum:
+                                - team_admin
+                                - team_finance_admin
+                                - team_viewer
+                              description: Role type of the administrator within the team.
+                          required:
+                            - relationship_nanoid
+                            - user_nanoid
+                            - avatar
+                            - first_name
+                            - last_name
+                            - email
+                            - type
+                          additionalProperties: false
+                    required:
+                      - nanoid
+                      - name
+                      - avatar
+                      - balance
+                      - administrators
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+    delete:
+      summary: Delete team by nanoid
+      tags:
+        - Team Management
+      parameters:
+        - schema:
+            type: string
+            minLength: 15
+            maxLength: 15
+            pattern: ^te\-
+          in: path
+          name: team_nanoid
+          required: true
+          description: TeamNanoid
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-token
+          required: true
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-action
+          required: true
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                required:
+                  - success
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+    put:
+      summary: Update team by nanoid
+      tags:
+        - Team Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+              required:
+                - name
+              additionalProperties: false
+        required: true
+      parameters:
+        - schema:
+            type: string
+            minLength: 15
+            maxLength: 15
+            pattern: ^te\-
+          in: path
+          name: team_nanoid
+          required: true
+          description: TeamNanoid
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-token
+          required: true
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-action
+          required: true
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        minLength: 1
+                        description: Name of the team.
+                      nanoid:
+                        type: string
+                        description: Unique identifier for the team.
+                      avatar:
+                        type: string
+                        description: URL of the team avatar.
+                    required:
+                      - name
+                      - nanoid
+                      - avatar
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+  /v2/teams:
+    post:
+      summary: Create a team
+      tags:
+        - Team Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  description: Name of the team, must be at least 1 character long and trimmed
+                company_nanoid:
+                  type: string
+                  minLength: 15
+                  maxLength: 15
+                  pattern: ^co\-
+                  description: Unique identifier for the company in nanoid format
+                admins:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      nanoid:
+                        type: string
+                        minLength: 15
+                        maxLength: 15
+                        pattern: ^us\-
+                        description: Unique identifier for the admin user in nanoid format
+                      type:
+                        allOf:
+                          - type: string
+                            enum:
+                              - team_admin
+                              - team_finance_admin
+                              - team_viewer
+                          - {}
+                        description: Role type of the admin within the team, can be team_admin,
+                          team_finance_admin, or team_viewer
+                    required:
+                      - nanoid
+                      - type
+                    additionalProperties: false
+                avatar_file_name:
+                  type: string
+                  description: Optional filename for the team avatar
+                withdraw_fee_coverage:
+                  type: boolean
+                  description: Indicates whether the team covers withdrawal fees
+              required:
+                - name
+                - company_nanoid
+                - admins
+                - withdraw_fee_coverage
+              additionalProperties: false
+        required: true
+      parameters:
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-token
+          required: true
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-action
+          required: true
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        minLength: 1
+                        description: Name of the team.
+                      nanoid:
+                        type: string
+                        description: Unique identifier for the team.
+                      avatar:
+                        type: string
+                        description: URL of the team avatar.
+                    required:
+                      - name
+                      - nanoid
+                      - avatar
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+  /v2/teams/{team_nanoid}/member/{user_nanoid}/summary:
+    get:
+      summary: Get team member summary
+      tags:
+        - Team Management
+      parameters:
+        - schema:
+            type: string
+            minLength: 15
+            maxLength: 15
+            pattern: ^te\-
+          in: path
+          name: team_nanoid
+          required: true
+          description: TeamNanoid
+        - schema:
+            type: string
+            minLength: 15
+            maxLength: 15
+            pattern: ^us\-
+          in: path
+          name: user_nanoid
+          required: true
+          description: UserNanoid
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                        properties:
+                          nanoid:
+                            type: string
+                            minLength: 15
+                            maxLength: 15
+                            pattern: ^us\-
+                            description: Unique identifier for the user
+                          avatar:
+                            type: string
+                            description: URL of the user's avatar
+                          first_name:
+                            type: string
+                            description: User's first name
+                          middle_name:
+                            type: string
+                            description: User's middle name
+                          last_name:
+                            type: string
+                            description: User's last name
+                          email:
+                            type: string
+                            description: User's email address
+                          blockchain_address:
+                            type: string
+                            description: User's blockchain wallet address
+                          phone:
+                            type: string
+                            description: User's phone number
+                          dob:
+                            type: string
+                            nullable: true
+                            description: User's date of birth, nullable
+                          address:
+                            type: object
+                            properties:
+                              line_1:
+                                type: string
+                                description: Primary address line
+                              line_2:
+                                type: string
+                                description: Secondary address line
+                              city:
+                                type: string
+                                description: City of residence
+                              state:
+                                type: string
+                                description: State or region
+                              country:
+                                type: string
+                                description: Country of residence
+                              zip_code:
+                                type: string
+                                description: Postal code
+                              timezone:
+                                type: string
+                                description: User's timezone
+                            required:
+                              - line_1
+                              - line_2
+                              - city
+                              - state
+                              - country
+                              - zip_code
+                              - timezone
+                            additionalProperties: false
+                          social:
+                            type: object
+                            properties:
+                              linkedin:
+                                type: string
+                                description: User's LinkedIn profile URL
+                              discord:
+                                type: string
+                                description: User's Discord handle
+                              website:
+                                type: string
+                                description: User's personal website
+                              x:
+                                type: string
+                                description: User's handle on platform X
+                            required:
+                              - linkedin
+                              - discord
+                              - website
+                              - x
+                            additionalProperties: false
+                          certifications:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                nanoid:
+                                  type: string
+                                  minLength: 15
+                                  maxLength: 15
+                                  pattern: ^ce\-
+                                  description: Unique identifier for the certification
+                                title:
+                                  type: string
+                                  description: Title of the certification
+                                website:
+                                  type: string
+                                  description: Website URL for certification details
+                                year:
+                                  type: number
+                                  description: Year the certification was obtained
+                                file:
+                                  type: string
+                                  description: URL of the file related to the certification
+                              required:
+                                - nanoid
+                                - title
+                                - website
+                                - year
+                                - file
+                              additionalProperties: false
+                            description: List of user's certifications
+                          onboarding:
+                            type: object
+                            properties:
+                              onboarded:
+                                allOf:
+                                  - anyOf:
+                                      - type: number
+                                      - type: string
+                                      - type: boolean
+                                  - type: boolean
+                                description: Indicates whether the user is onboarded
+                              step:
+                                type: string
+                                enum:
+                                  - complete
+                                  - compliance_process
+                                  - details
+                                  - initial
+                                  - riseid
+                                  - security
+                                  - signer
+                                  - signing
+                                  - v1_migration_in_progress
+                                  - v1_migration_need_rsk
+                                nullable: true
+                                description: Current onboarding step, nullable
+                              role:
+                                type: string
+                                enum:
+                                  - admin
+                                  - payee
+                                  - payer
+                                  - viewer
+                                nullable: true
+                                description: User's role during onboarding, nullable
+                              moderation_status:
+                                type: string
+                                enum:
+                                  - approved
+                                  - pending
+                                  - rejected
+                                  - submitted
+                                nullable: true
+                                description: Moderation status during onboarding, nullable
+                            required:
+                              - onboarded
+                              - step
+                              - role
+                              - moderation_status
+                            additionalProperties: false
+                        required:
+                          - nanoid
+                          - avatar
+                          - first_name
+                          - middle_name
+                          - last_name
+                          - email
+                          - blockchain_address
+                          - phone
+                          - dob
+                          - address
+                          - social
+                          - certifications
+                          - onboarding
+                        additionalProperties: false
+                      relationship_type:
+                        type: string
+                        enum:
+                          - team_employee
+                          - contractor
+                        description: Type of relationship with the team
+                      company:
+                        type: object
+                        properties:
+                          nanoid:
+                            type: string
+                            minLength: 15
+                            maxLength: 15
+                            pattern: ^co\-
+                            description: Unique identifier for the company
+                          avatar:
+                            type: string
+                            description: URL of the company's avatar
+                          name:
+                            type: string
+                            description: Company's name
+                          website:
+                            type: string
+                            description: Company's website URL
+                          blockchain_address:
+                            type: string
+                            description: Company's blockchain wallet address
+                          address:
+                            type: object
+                            properties:
+                              line_1:
+                                type: string
+                                description: Primary address line
+                              line_2:
+                                type: string
+                                description: Secondary address line
+                              city:
+                                type: string
+                                description: City of the company
+                              state:
+                                type: string
+                                description: State or region
+                              country:
+                                type: string
+                                description: Country of the company
+                              zip_code:
+                                type: string
+                                description: Postal code
+                              timezone:
+                                type: string
+                                description: Company's timezone
+                            required:
+                              - line_1
+                              - line_2
+                              - city
+                              - state
+                              - country
+                              - zip_code
+                              - timezone
+                            additionalProperties: false
+                          admin_contact:
+                            type: object
+                            properties:
+                              fullname:
+                                type: string
+                                description: Administrator's full name
+                              phone:
+                                type: string
+                                description: Administrator's phone number
+                              email:
+                                type: string
+                                description: Administrator's email address
+                            required:
+                              - fullname
+                              - phone
+                              - email
+                            additionalProperties: false
+                            nullable: true
+                            description: Contact information for the company administrator
+                          incorporation_country:
+                            type: string
+                            description: Country of incorporation
+                          incorporation_type:
+                            type: string
+                            enum:
+                              - association
+                              - c-corporation
+                              - charitable_incorporated_organisation
+                              - chartered_company
+                              - holding_company
+                              - im_not_sure
+                              - limited_liability_company
+                              - limited_partnership
+                              - non_government_organisation
+                              - non_profit_organisation
+                              - private_limited_company
+                              - public_limited_company
+                              - s-corporation
+                              - sole_proprietorship
+                              - statutory_company
+                              - subsidiary_company
+                              - unlimited_partnership
+                            description: Type of incorporation
+                          private_data:
+                            type: object
+                            properties:
+                              tax_id:
+                                type: string
+                                description: Company's tax identification number
+                            required:
+                              - tax_id
+                            additionalProperties: false
+                        required:
+                          - nanoid
+                          - avatar
+                          - name
+                          - website
+                          - blockchain_address
+                          - address
+                          - admin_contact
+                          - incorporation_country
+                          - incorporation_type
+                          - private_data
+                        additionalProperties: false
+                        description: Details of the associated company, optional
+                      pay_schedules:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            nanoid:
+                              type: string
+                              minLength: 15
+                              maxLength: 15
+                              pattern: ^ps\-
+                              description: Unique identifier for the pay schedule
+                            type:
+                              type: string
+                              enum:
+                                - milestone
+                                - recurring
+                              description: Type of pay schedule
+                            amount:
+                              type: string
+                              description: Payment amount
+                            payments_amount:
+                              type: number
+                              description: Total number of payments
+                            start_date:
+                              allOf:
+                                - anyOf:
+                                    - type: number
+                                    - type: string
+                                    - type: string
+                                      format: date-time
+                                - type: string
+                                  format: date-time
+                              description: Start date of the pay schedule
+                            end_date:
+                              allOf:
+                                - anyOf:
+                                    - type: number
+                                    - type: string
+                                    - type: string
+                                      format: date-time
+                                - type: string
+                                  format: date-time
+                              description: End date of the pay schedule
+                          required:
+                            - nanoid
+                            - type
+                            - amount
+                            - payments_amount
+                            - start_date
+                            - end_date
+                          additionalProperties: false
+                        description: List of pay schedules associated with the user
+                    required:
+                      - user
+                      - relationship_type
+                      - pay_schedules
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+  /v2/teams/{team_nanoid}/member/{user_nanoid}/settings:
+    get:
+      summary: Get team member settings
+      tags:
+        - Team Management
+      parameters:
+        - schema:
+            type: string
+            minLength: 15
+            maxLength: 15
+            pattern: ^te\-
+          in: path
+          name: team_nanoid
+          required: true
+          description: TeamNanoid
+        - schema:
+            type: string
+            minLength: 15
+            maxLength: 15
+            pattern: ^us\-
+          in: path
+          name: user_nanoid
+          required: true
+          description: UserNanoid
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      withdraw_fee_coverage:
+                        type: boolean
+                    required:
+                      - withdraw_fee_coverage
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+    put:
+      summary: Update team member settings
+      tags:
+        - Team Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                withdraw_fee_coverage:
+                  type: boolean
+              required:
+                - withdraw_fee_coverage
+              additionalProperties: false
+        required: true
+      parameters:
+        - schema:
+            type: string
+            minLength: 15
+            maxLength: 15
+            pattern: ^te\-
+          in: path
+          name: team_nanoid
+          required: true
+          description: TeamNanoid
+        - schema:
+            type: string
+            minLength: 15
+            maxLength: 15
+            pattern: ^us\-
+          in: path
+          name: user_nanoid
+          required: true
+          description: UserNanoid
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-token
+          required: true
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-action
+          required: true
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                required:
+                  - success
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+  /v2/teams/{team_nanoid}/member/{user_nanoid}:
+    delete:
+      summary: Delete team member
+      tags:
+        - Team Management
+      parameters:
+        - schema:
+            type: string
+            minLength: 15
+            maxLength: 15
+            pattern: ^te\-
+          in: path
+          name: team_nanoid
+          required: true
+          description: TeamNanoid
+        - schema:
+            type: string
+            minLength: 15
+            maxLength: 15
+            pattern: ^us\-
+          in: path
+          name: user_nanoid
+          required: true
+          description: UserNanoid
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                required:
+                  - success
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+servers:
+  - url: http://127.0.0.1:8080
+    description: Local
+  - url: https://dev-pay-api.riseworks.dev
+    description: Development
+  - url: https://staging-pay-api.riseworks.io
+    description: Staging
+  - url: https://pay-api.riseworks.io
+    description: Production

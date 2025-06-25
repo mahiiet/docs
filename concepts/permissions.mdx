@@ -1,0 +1,23 @@
+---
+title: 'Permissions'
+description: 'Role-based access and security in Rise B2B API'
+---
+
+# Permissions
+
+Rise B2B API uses role-based access control (RBAC) to secure all operations.
+
+## Roles
+- `team_admin`: Full access to team and payments
+- `team_finance_admin`: Manage payments
+- `team_viewer`: Read-only
+- `user`: Limited to own data
+
+## Scopes
+- Each API call checks the user's role and scope
+- Permissions are enforced on every endpoint
+
+## Security Tips
+- Assign the minimum required role
+- Rotate admin roles regularly
+- Audit access logs 

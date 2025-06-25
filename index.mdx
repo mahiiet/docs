@@ -1,71 +1,249 @@
 ---
-title: Introduction
-description: "Welcome to the home of your new documentation"
+title: "Rise B2B API Documentation"
+description: "Build powerful integrations with Rise's blockchain-based global payroll and team management platform"
 ---
 
-<img
-  className="block dark:hidden"
-  src="/images/hero-light.png"
-  alt="Hero Light"
-/>
-<img
-  className="hidden dark:block"
-  src="/images/hero-dark.png"
-  alt="Hero Dark"
-/>
+# Rise B2B API
 
-## Setting up
+**Global Payroll for the Modern Workforce**
 
-The first step to world-class documentation is setting up your editing environments.
+Streamline payments to contractors and full-time employees around the globe with Rise's blockchain-first platform. Our B2B API enables seamless integration for payroll, team management, and compliance automation across 190+ countries.
 
 <CardGroup cols={2}>
   <Card
-    title="Edit Your Docs"
-    icon="pen-to-square"
-    href="https://mintlify.com/docs/quickstart"
+    title="🔐 Secure Authentication"
+    icon="shield"
+    href="/authentication"
   >
-    Get your docs set up locally for easy development
+    Sign-In with Ethereum (SIWE) for secure, blockchain-based authentication
   </Card>
   <Card
-    title="Preview Changes"
-    icon="image"
-    href="https://mintlify.com/docs/development"
+    title="💰 Payment Processing"
+    icon="credit-card"
+    href="/guides/payment-integration"
   >
-    Preview your changes before you push to make sure they're perfect
+    Process payments in 90+ local currencies and 100+ cryptocurrencies
+  </Card>
+  <Card
+    title="👥 Team Management"
+    icon="users"
+    href="/guides/team-management"
+  >
+    Manage teams, roles, and permissions with comprehensive RBAC
+  </Card>
+  <Card
+    title="🌐 Web3 Integration"
+    icon="globe"
+    href="/web3-integration"
+  >
+    EIP-712 typed data signing for secure blockchain operations
   </Card>
 </CardGroup>
 
-## Make it yours
+## Why Rise B2B API?
 
-Update your docs to your brand and add valuable content for the best user conversion.
+<CardGroup cols={3}>
+  <Card title="Blockchain-First" icon="link">
+    All actions secured and executed on-chain with smart contracts on Arbitrum
+  </Card>
+  <Card title="Global Compliance" icon="check-circle">
+    Automated identity verification and compliance across 190+ countries
+  </Card>
+  <Card title="Flexible Payments" icon="wallet">
+    Pay in local currency, stablecoins, or cryptocurrencies
+  </Card>
+  <Card title="Role-Based Access" icon="lock">
+    Comprehensive RBAC system for secure team management
+  </Card>
+  <Card title="Real-Time Balances" icon="activity">
+    Monitor entity balances across multiple currencies
+  </Card>
+  <Card title="Developer-Friendly" icon="code">
+    RESTful API with comprehensive documentation and examples
+  </Card>
+</CardGroup>
+
+## Platform Statistics
+
+<CardGroup cols={4}>
+  <Card title="90+" icon="globe">
+    Local Currencies Supported
+  </Card>
+  <Card title="100+" icon="bitcoin">
+    Cryptocurrencies Supported
+  </Card>
+  <Card title="$650M+" icon="dollar-sign">
+    Paid to Teams Globally
+  </Card>
+  <Card title="190" icon="map-pin">
+    Countries Supported
+  </Card>
+</CardGroup>
+
+## Quick Start
+
+Get up and running with Rise B2B API in minutes:
+
+<Steps>
+  <Step title="Authenticate">
+    Set up SIWE authentication to securely connect with Rise's platform
+  </Step>
+  <Step title="Create Teams">
+    Organize your workforce with teams and role-based permissions
+  </Step>
+  <Step title="Process Payments">
+    Send payments in multiple currencies with EIP-712 signing
+  </Step>
+  <Step title="Monitor Balances">
+    Track entity balances and transaction history in real-time
+  </Step>
+</Steps>
+
+## Core Features
+
+### Authentication & Security
+- **Sign-In with Ethereum (SIWE)** for secure wallet-based authentication
+- **JWT token management** with 24-hour expiration
+- **Role-based access control** with granular permissions
+- **EIP-712 typed data signing** for secure blockchain operations
+
+### Team Management
+- **Hierarchical organization** with companies and teams
+- **Comprehensive role system** (admin, finance, employee, viewer, contractor)
+- **Bulk invite system** for efficient onboarding
+- **Permission validation** for secure operations
+
+### Payment Processing
+- **Multi-currency support** (90+ local currencies, 100+ cryptocurrencies)
+- **Batch payment processing** for efficiency
+- **Real-time transaction monitoring**
+- **Gas-optimized blockchain transactions**
+
+### Balance Management
+- **Real-time balance tracking** across all supported currencies
+- **Entity-based balance system** using nanoid identifiers
+- **Secure balance queries** with proper authorization
+- **Multi-currency balance aggregation**
+
+## Integration Examples
+
+### React Hook for Authentication
+```typescript
+import { useRiseAuth } from './hooks/useRiseAuth';
+
+function App() {
+  const { jwt, loading, authenticate, logout } = useRiseAuth();
+  
+  const handleLogin = async () => {
+    await authenticate(walletAddress, riseId);
+  };
+  
+  return (
+    <div>
+      {!jwt ? (
+        <button onClick={handleLogin}>Sign In with Ethereum</button>
+      ) : (
+        <button onClick={logout}>Sign Out</button>
+      )}
+    </div>
+  );
+}
+```
+
+### Payment Processing
+```typescript
+import { useRisePayments } from './hooks/useRisePayments';
+
+function PaymentComponent() {
+  const { processing, processPayment } = useRisePayments(jwt);
+  
+  const handlePayment = async () => {
+    const recipients = [
+      {
+        to: 'user_nanoid_123',
+        amount: '100.00',
+        currency: 'USD',
+        description: 'Salary payment'
+      }
+    ];
+    
+    await processPayment('team_nanoid_456', recipients, walletAddress);
+  };
+  
+  return (
+    <button onClick={handlePayment} disabled={processing}>
+      {processing ? 'Processing...' : 'Send Payment'}
+    </button>
+  );
+}
+```
+
+## Getting Started
 
 <CardGroup cols={2}>
   <Card
-    title="Customize Style"
-    icon="palette"
-    href="https://mintlify.com/docs/settings/global"
+    title="Quickstart Guide"
+    icon="rocket"
+    href="/quickstart"
   >
-    Customize your docs to your company's colors and brands
+    Get up and running in 5 minutes with our step-by-step guide
   </Card>
   <Card
-    title="Reference APIs"
+    title="Authentication"
+    icon="key"
+    href="/authentication"
+  >
+    Learn about SIWE authentication and JWT token management
+  </Card>
+  <Card
+    title="Core Concepts"
+    icon="book"
+    href="/concepts/riseid"
+  >
+    Understand RiseID, teams, roles, and entity management
+  </Card>
+  <Card
+    title="API Reference"
     icon="code"
-    href="https://mintlify.com/docs/api-playground/openapi"
+    href="/api-reference"
   >
-    Automatically generate endpoints from an OpenAPI spec
-  </Card>
-  <Card
-    title="Add Components"
-    icon="screwdriver-wrench"
-    href="https://mintlify.com/docs/content/components/accordions"
-  >
-    Build interactive features and designs to guide your users
-  </Card>
-  <Card
-    title="Get Inspiration"
-    icon="stars"
-    href="https://mintlify.com/customers"
-  >
-    Check out our showcase of our favorite documentation
+    Explore the complete API specification with examples
   </Card>
 </CardGroup>
+
+## Support & Resources
+
+<CardGroup cols={2}>
+  <Card
+    title="Support"
+    icon="message-circle"
+    href="mailto:Hello@Riseworks.io"
+  >
+    Get help from our technical support team
+  </Card>
+  <Card
+    title="Status Page"
+    icon="activity"
+    href="https://status.rise.works"
+  >
+    Check API status and maintenance updates
+  </Card>
+  <Card
+    title="Dashboard"
+    icon="dashboard"
+    href="https://app.rise.works"
+  >
+    Access the Rise dashboard for team management
+  </Card>
+  <Card
+    title="Website"
+    icon="globe"
+    href="https://www.riseworks.io"
+  >
+    Learn more about Rise's global payroll solutions
+  </Card>
+</CardGroup>
+
+<Note>
+  **Ready to get started?** Begin with our [Quickstart Guide](/quickstart) to set up your first integration with Rise B2B API.
+</Note>

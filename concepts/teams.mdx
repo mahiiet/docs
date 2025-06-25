@@ -1,0 +1,800 @@
+---
+title: 'Teams'
+description: 'Learn about team management, roles, and permissions in Rise B2B'
+---
+
+# Teams
+
+Teams are the core organizational unit in Rise B2B. They represent groups of users who can collaborate on payments, manage shared funds, and control access to resources.
+
+## Team Structure
+
+<Steps>
+  <Step title="Create Team">
+    Establish a new team with a name and initial admin
+  </Step>
+  <Step title="Add Members">
+    Invite users with specific roles and permissions
+  </Step>
+  <Step title="Manage Funds">
+    Control shared entity balances and payment limits
+  </Step>
+  <Step title="Set Permissions">
+    Configure access levels for different team members
+  </Step>
+</Steps>
+
+## Team Roles
+
+Rise B2B supports four distinct team roles with different permission levels:
+
+### Team Admin
+- **Full control** over team settings and members
+- Can create, modify, and delete team configurations
+- Manages all team funds and payment limits
+- Can invite and remove team members
+- Access to all team features and data
+
+### Finance Admin
+- **Financial management** capabilities
+- Can create and execute payments
+- Manages team budgets and spending limits
+- Can view financial reports and transaction history
+- Cannot modify team structure or member permissions
+
+### Team Employee
+- **Standard team member** with payment capabilities
+- Can create and execute payments within limits
+- Access to team funds for authorized transactions
+- Can view relevant team information
+- Cannot modify team settings or invite new members
+
+### Team Viewer
+- **Read-only access** to team information
+- Can view team members, payments, and balances
+- Cannot create payments or modify any settings
+- Useful for auditors, accountants, or stakeholders
+
+## Creating Teams
+
+### Step 1: Create a New Team
+
+<RequestExample>
+```bash
+curl -X POST "https://api.rise.works/v2/teams" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Engineering Team",
+    "description": "Core engineering team for product development",
+    "entity_nanoid": "entity_123",
+    "admin_wallet": "0x1234567890abcdef..."
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "team_nanoid": "team_123456789",
+    "name": "Engineering Team",
+    "description": "Core engineering team for product development",
+    "entity_nanoid": "entity_123",
+    "admin_wallet": "0x1234567890abcdef...",
+    "created_at": "2024-01-01T12:00:00Z",
+    "member_count": 1,
+    "status": "active"
+  }
+}
+```
+</ResponseExample>
+
+### Step 2: Add Team Members
+
+<RequestExample>
+```bash
+curl -X POST "https://api.rise.works/v2/teams/team_123456789/members" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_nanoid": "user_456",
+    "role": "team_employee",
+    "permissions": ["pay", "view"]
+  }'
+```
+</RequestExample>
+
+## Team Management Examples
+
+<CodeGroup>
+
+```javascript
+class RiseTeams {
+  constructor(baseUrl = 'https://api.rise.works', jwtToken) {
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async createTeam(name, description, entityNanoid, adminWallet) {
+    const teamData = {
+      name,
+      description,
+      entity_nanoid: entityNanoid,
+      admin_wallet: adminWallet
+    };
+
+    const response = await fetch(`${this.baseUrl}/v2/teams`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(teamData)
+    });
+
+    return response.json();
+  }
+
+  async getTeam(teamNanoid) {
+    const response = await fetch(
+      `${this.baseUrl}/v2/teams/${teamNanoid}`,
+      { headers: this.headers }
+    );
+    return response.json();
+  }
+
+  async addMember(teamNanoid, userNanoid, role, permissions) {
+    const memberData = {
+      user_nanoid: userNanoid,
+      role,
+      permissions
+    };
+
+    const response = await fetch(`${this.baseUrl}/v2/teams/${teamNanoid}/members`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(memberData)
+    });
+
+    return response.json();
+  }
+
+  async updateMemberRole(teamNanoid, userNanoid, newRole, newPermissions) {
+    const updateData = {
+      role: newRole,
+      permissions: newPermissions
+    };
+
+    const response = await fetch(`${this.baseUrl}/v2/teams/${teamNanoid}/members/${userNanoid}`, {
+      method: 'PUT',
+      headers: this.headers,
+      body: JSON.stringify(updateData)
+    });
+
+    return response.json();
+  }
+
+  async removeMember(teamNanoid, userNanoid) {
+    const response = await fetch(`${this.baseUrl}/v2/teams/${teamNanoid}/members/${userNanoid}`, {
+      method: 'DELETE',
+      headers: this.headers
+    });
+
+    return response.json();
+  }
+}
+```
+
+```typescript
+interface TeamData {
+  name: string;
+  description: string;
+  entity_nanoid: string;
+  admin_wallet: string;
+}
+
+interface TeamResponse {
+  success: boolean;
+  data: {
+    team_nanoid: string;
+    name: string;
+    description: string;
+    entity_nanoid: string;
+    admin_wallet: string;
+    created_at: string;
+    member_count: number;
+    status: 'active' | 'inactive';
+  };
+}
+
+interface MemberData {
+  user_nanoid: string;
+  role: 'team_admin' | 'team_finance_admin' | 'team_employee' | 'team_viewer';
+  permissions: string[];
+}
+
+class RiseTeams {
+  private baseUrl: string;
+  private headers: Record<string, string>;
+
+  constructor(baseUrl: string = 'https://api.rise.works', jwtToken: string) {
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async createTeam(teamData: TeamData): Promise<TeamResponse> {
+    const response = await fetch(`${this.baseUrl}/v2/teams`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(teamData)
+    });
+
+    return response.json();
+  }
+
+  async getTeam(teamNanoid: string): Promise<TeamResponse> {
+    const response = await fetch(
+      `${this.baseUrl}/v2/teams/${teamNanoid}`,
+      { headers: this.headers }
+    );
+    return response.json();
+  }
+
+  async addMember(teamNanoid: string, memberData: MemberData): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/v2/teams/${teamNanoid}/members`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(memberData)
+    });
+
+    return response.json();
+  }
+
+  async updateMemberRole(
+    teamNanoid: string, 
+    userNanoid: string, 
+    newRole: string, 
+    newPermissions: string[]
+  ): Promise<any> {
+    const updateData = {
+      role: newRole,
+      permissions: newPermissions
+    };
+
+    const response = await fetch(`${this.baseUrl}/v2/teams/${teamNanoid}/members/${userNanoid}`, {
+      method: 'PUT',
+      headers: this.headers,
+      body: JSON.stringify(updateData)
+    });
+
+    return response.json();
+  }
+
+  async removeMember(teamNanoid: string, userNanoid: string): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/v2/teams/${teamNanoid}/members/${userNanoid}`, {
+      method: 'DELETE',
+      headers: this.headers
+    });
+
+    return response.json();
+  }
+}
+```
+
+```python
+import requests
+from typing import List, Optional
+
+class RiseTeams:
+    def __init__(self, base_url: str = "https://api.rise.works", jwt_token: str = None):
+        self.base_url = base_url
+        self.headers = {
+            "Authorization": f"Bearer {jwt_token}",
+            "Content-Type": "application/json"
+        }
+    
+    def create_team(
+        self, 
+        name: str, 
+        description: str, 
+        entity_nanoid: str, 
+        admin_wallet: str
+    ) -> dict:
+        """Create a new team"""
+        team_data = {
+            "name": name,
+            "description": description,
+            "entity_nanoid": entity_nanoid,
+            "admin_wallet": admin_wallet
+        }
+        
+        response = requests.post(
+            f"{self.base_url}/v2/teams",
+            headers=self.headers,
+            json=team_data
+        )
+        return response.json()
+    
+    def get_team(self, team_nanoid: str) -> dict:
+        """Get team details"""
+        response = requests.get(
+            f"{self.base_url}/v2/teams/{team_nanoid}",
+            headers=self.headers
+        )
+        return response.json()
+    
+    def add_member(
+        self, 
+        team_nanoid: str, 
+        user_nanoid: str, 
+        role: str, 
+        permissions: List[str]
+    ) -> dict:
+        """Add a member to the team"""
+        member_data = {
+            "user_nanoid": user_nanoid,
+            "role": role,
+            "permissions": permissions
+        }
+        
+        response = requests.post(
+            f"{self.base_url}/v2/teams/{team_nanoid}/members",
+            headers=self.headers,
+            json=member_data
+        )
+        return response.json()
+```
+
+</CodeGroup>
+
+## React Hook for Team Management
+
+```typescript
+import { useState } from 'react';
+
+interface UseRiseTeams {
+  loading: boolean;
+  error: string | null;
+  createTeam: (teamData: TeamData) => Promise<TeamResponse>;
+  getTeam: (teamNanoid: string) => Promise<TeamResponse>;
+  addMember: (teamNanoid: string, memberData: MemberData) => Promise<any>;
+  updateMemberRole: (teamNanoid: string, userNanoid: string, role: string, permissions: string[]) => Promise<any>;
+  removeMember: (teamNanoid: string, userNanoid: string) => Promise<any>;
+}
+
+export function useRiseTeams(jwtToken: string): UseRiseTeams {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const createTeam = async (teamData: TeamData): Promise<TeamResponse> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const teams = new RiseTeams('https://api.rise.works', jwtToken);
+      const result = await teams.createTeam(teamData);
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create team';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getTeam = async (teamNanoid: string): Promise<TeamResponse> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const teams = new RiseTeams('https://api.rise.works', jwtToken);
+      const result = await teams.getTeam(teamNanoid);
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to get team';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addMember = async (teamNanoid: string, memberData: MemberData) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const teams = new RiseTeams('https://api.rise.works', jwtToken);
+      const result = await teams.addMember(teamNanoid, memberData);
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add member';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateMemberRole = async (teamNanoid: string, userNanoid: string, role: string, permissions: string[]) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const teams = new RiseTeams('https://api.rise.works', jwtToken);
+      const result = await teams.updateMemberRole(teamNanoid, userNanoid, role, permissions);
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update member role';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeMember = async (teamNanoid: string, userNanoid: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const teams = new RiseTeams('https://api.rise.works', jwtToken);
+      const result = await teams.removeMember(teamNanoid, userNanoid);
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to remove member';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { 
+    loading, 
+    error, 
+    createTeam, 
+    getTeam, 
+    addMember, 
+    updateMemberRole, 
+    removeMember 
+  };
+}
+```
+
+## Team Management Component
+
+```typescript
+import React, { useState, useEffect } from 'react';
+import { useRiseTeams } from './useRiseTeams';
+
+interface TeamManagementProps {
+  entityNanoid: string;
+  jwtToken: string;
+}
+
+export function TeamManagement({ entityNanoid, jwtToken }: TeamManagementProps) {
+  const { loading, error, createTeam, getTeam, addMember, updateMemberRole, removeMember } = useRiseTeams(jwtToken);
+  const [teams, setTeams] = useState([]);
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [newTeam, setNewTeam] = useState({
+    name: '',
+    description: '',
+    admin_wallet: ''
+  });
+
+  const handleCreateTeam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const result = await createTeam({
+        ...newTeam,
+        entity_nanoid: entityNanoid
+      });
+      
+      // Refresh teams list
+      fetchTeams();
+      
+      // Reset form
+      setNewTeam({
+        name: '',
+        description: '',
+        admin_wallet: ''
+      });
+    } catch (err) {
+      console.error('Failed to create team:', err);
+    }
+  };
+
+  const handleAddMember = async (teamNanoid: string, userNanoid: string, role: string) => {
+    try {
+      await addMember(teamNanoid, {
+        user_nanoid: userNanoid,
+        role,
+        permissions: getDefaultPermissions(role)
+      });
+      
+      // Refresh team details
+      if (selectedTeam?.team_nanoid === teamNanoid) {
+        const updatedTeam = await getTeam(teamNanoid);
+        setSelectedTeam(updatedTeam.data);
+      }
+    } catch (err) {
+      console.error('Failed to add member:', err);
+    }
+  };
+
+  const handleUpdateMemberRole = async (teamNanoid: string, userNanoid: string, newRole: string) => {
+    try {
+      await updateMemberRole(teamNanoid, userNanoid, newRole, getDefaultPermissions(newRole));
+      
+      // Refresh team details
+      if (selectedTeam?.team_nanoid === teamNanoid) {
+        const updatedTeam = await getTeam(teamNanoid);
+        setSelectedTeam(updatedTeam.data);
+      }
+    } catch (err) {
+      console.error('Failed to update member role:', err);
+    }
+  };
+
+  const handleRemoveMember = async (teamNanoid: string, userNanoid: string) => {
+    if (confirm('Are you sure you want to remove this member?')) {
+      try {
+        await removeMember(teamNanoid, userNanoid);
+        
+        // Refresh team details
+        if (selectedTeam?.team_nanoid === teamNanoid) {
+          const updatedTeam = await getTeam(teamNanoid);
+          setSelectedTeam(updatedTeam.data);
+        }
+      } catch (err) {
+        console.error('Failed to remove member:', err);
+      }
+    }
+  };
+
+  const getDefaultPermissions = (role: string): string[] => {
+    switch (role) {
+      case 'team_admin':
+        return ['pay', 'view', 'manage', 'invite'];
+      case 'team_finance_admin':
+        return ['pay', 'view', 'finance'];
+      case 'team_employee':
+        return ['pay', 'view'];
+      case 'team_viewer':
+        return ['view'];
+      default:
+        return ['view'];
+    }
+  };
+
+  return (
+    <div className="team-management">
+      <h2>Team Management</h2>
+      
+      {/* Create New Team Form */}
+      <form onSubmit={handleCreateTeam}>
+        <input
+          type="text"
+          placeholder="Team name"
+          value={newTeam.name}
+          onChange={(e) => setNewTeam({...newTeam, name: e.target.value})}
+          required
+        />
+        
+        <textarea
+          placeholder="Team description"
+          value={newTeam.description}
+          onChange={(e) => setNewTeam({...newTeam, description: e.target.value})}
+        />
+        
+        <input
+          type="text"
+          placeholder="Admin wallet address"
+          value={newTeam.admin_wallet}
+          onChange={(e) => setNewTeam({...newTeam, admin_wallet: e.target.value})}
+          required
+        />
+        
+        <button type="submit" disabled={loading}>
+          {loading ? 'Creating...' : 'Create Team'}
+        </button>
+      </form>
+
+      {/* Teams List */}
+      <div className="teams-list">
+        <h3>Your Teams</h3>
+        {teams.map(team => (
+          <div key={team.team_nanoid} className="team-item">
+            <div>
+              <strong>{team.name}</strong>
+              <span className="member-count">{team.member_count} members</span>
+              <span className="status">{team.status}</span>
+            </div>
+            <button onClick={() => setSelectedTeam(team)}>
+              Manage
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Team Details */}
+      {selectedTeam && (
+        <div className="team-details">
+          <h3>{selectedTeam.name}</h3>
+          <p>{selectedTeam.description}</p>
+          
+          <div className="members-list">
+            <h4>Team Members</h4>
+            {selectedTeam.members?.map(member => (
+              <div key={member.user_nanoid} className="member-item">
+                <div>
+                  <strong>{member.email}</strong>
+                  <span className="role">{member.role}</span>
+                </div>
+                <div className="actions">
+                  <select
+                    value={member.role}
+                    onChange={(e) => handleUpdateMemberRole(selectedTeam.team_nanoid, member.user_nanoid, e.target.value)}
+                  >
+                    <option value="team_admin">Admin</option>
+                    <option value="team_finance_admin">Finance Admin</option>
+                    <option value="team_employee">Employee</option>
+                    <option value="team_viewer">Viewer</option>
+                  </select>
+                  <button onClick={() => handleRemoveMember(selectedTeam.team_nanoid, member.user_nanoid)}>
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {error && <div className="error">{error}</div>}
+    </div>
+  );
+}
+```
+
+## Team Permissions Matrix
+
+| Permission | Team Admin | Finance Admin | Employee | Viewer |
+|------------|------------|---------------|----------|--------|
+| **View** | ✅ | ✅ | ✅ | ✅ |
+| **Pay** | ✅ | ✅ | ✅ | ❌ |
+| **Finance** | ✅ | ✅ | ❌ | ❌ |
+| **Manage** | ✅ | ❌ | ❌ | ❌ |
+| **Invite** | ✅ | ❌ | ❌ | ❌ |
+
+## Real-World Team Scenarios
+
+### Startup Team Structure
+
+```typescript
+interface StartupTeam {
+  name: string;
+  description: string;
+  members: Array<{
+    email: string;
+    role: string;
+    permissions: string[];
+  }>;
+}
+
+const startupTeam: StartupTeam = {
+  name: "Acme Startup Team",
+  description: "Core team for product development and operations",
+  members: [
+    {
+      email: "ceo@acme.com",
+      role: "team_admin",
+      permissions: ["pay", "view", "manage", "invite"]
+    },
+    {
+      email: "cfo@acme.com", 
+      role: "team_finance_admin",
+      permissions: ["pay", "view", "finance"]
+    },
+    {
+      email: "engineer@acme.com",
+      role: "team_employee", 
+      permissions: ["pay", "view"]
+    },
+    {
+      email: "investor@acme.com",
+      role: "team_viewer",
+      permissions: ["view"]
+    }
+  ]
+};
+```
+
+### Enterprise Team Structure
+
+```typescript
+interface EnterpriseTeam {
+  name: string;
+  description: string;
+  departments: Array<{
+    name: string;
+    members: Array<{
+      email: string;
+      role: string;
+      permissions: string[];
+    }>;
+  }>;
+}
+
+const enterpriseTeam: EnterpriseTeam = {
+  name: "Enterprise Corp",
+  description: "Multi-department enterprise team",
+  departments: [
+    {
+      name: "Engineering",
+      members: [
+        {
+          email: "eng-manager@enterprise.com",
+          role: "team_admin",
+          permissions: ["pay", "view", "manage", "invite"]
+        },
+        {
+          email: "senior-dev@enterprise.com",
+          role: "team_employee",
+          permissions: ["pay", "view"]
+        }
+      ]
+    },
+    {
+      name: "Finance",
+      members: [
+        {
+          email: "finance-director@enterprise.com",
+          role: "team_finance_admin",
+          permissions: ["pay", "view", "finance"]
+        },
+        {
+          email: "accountant@enterprise.com",
+          role: "team_viewer",
+          permissions: ["view"]
+        }
+      ]
+    }
+  ]
+};
+```
+
+## Error Handling
+
+Common team management errors and solutions:
+
+| Error Code | Description | Solution |
+|------------|-------------|----------|
+| `INVALID_TEAM_NAME` | Team name is invalid or too long | Use a valid team name (2-50 characters) |
+| `INVALID_ADMIN_WALLET` | Admin wallet address is invalid | Ensure wallet address is valid Ethereum address |
+| `INSUFFICIENT_PERMISSIONS` | User lacks permission for action | Check user's role and permissions |
+| `TEAM_NOT_FOUND` | Team does not exist | Verify team_nanoid is correct |
+| `MEMBER_ALREADY_EXISTS` | User is already a team member | Check existing team membership |
+| `CANNOT_REMOVE_ADMIN` | Cannot remove the last admin | Ensure at least one admin remains |
+
+## Best Practices
+
+<Warning>
+  **Always maintain at least one team admin** to prevent losing access to team management capabilities.
+</Warning>
+
+- **Role Hierarchy**: Use the principle of least privilege when assigning roles
+- **Regular Audits**: Periodically review team members and their permissions
+- **Documentation**: Keep records of team structure and permission changes
+- **Backup Admins**: Always have multiple admins for critical teams
+- **Permission Reviews**: Regularly review and update member permissions
+
+See [Permissions](/concepts/permissions) for details on role-based access control. 

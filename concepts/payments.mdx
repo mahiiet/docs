@@ -1,0 +1,28 @@
+---
+title: 'Payments'
+description: 'Understand payment flows and security in Rise B2B API'
+---
+
+# Payments
+
+Rise B2B API supports secure, on-chain payments for payroll and business operations.
+
+## Payment Types
+- Batch payments
+- Individual payments
+
+## Payment Flow
+1. Create payment draft (get typedata)
+2. Sign with wallet (EIP-712)
+3. Submit signature
+4. Track status
+
+## Security
+- All payments are verified on-chain
+- Typedata signatures prevent tampering
+- Use HTTPS and verify contract addresses
+
+## Best Practices
+- Always review payment details before signing
+- Monitor payment status via API
+- Use [Payment Integration Guide](/guides/payment-integration) for full examples 

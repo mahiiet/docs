@@ -1,0 +1,27 @@
+---
+title: 'Error Handling'
+description: 'Error codes and troubleshooting for Rise B2B API'
+---
+
+# Error Handling
+
+Rise B2B API returns clear error codes and messages for all endpoints.
+
+## Common Error Codes
+| Code | Description |
+|------|-------------|
+| 400  | Bad Request |
+| 401  | Unauthorized (invalid JWT or SIWE) |
+| 403  | Forbidden (insufficient permissions) |
+| 404  | Not Found |
+| 500  | Internal Server Error |
+
+## Troubleshooting
+- Check JWT validity and expiration
+- Ensure correct permissions for the endpoint
+- Validate all required parameters
+
+## Best Practices
+- Log errors for debugging
+- Show user-friendly error messages
+- Retry on 500 errors with backoff 

@@ -1,0 +1,257 @@
+---
+title: 'Roles & Permissions'
+description: 'Understanding role-based access control and permissions in Rise B2B API'
+---
+
+# Roles & Permissions
+
+Rise B2B API implements a comprehensive role-based access control (RBAC) system that defines what users can do within companies and teams. Understanding these roles is essential for building secure integrations.
+
+## Role Hierarchy
+
+Rise uses a hierarchical permission system where company roles cascade down to team roles:
+
+<CardGroup cols={2}>
+  <Card title="Company Level" icon="building">
+    Organization-wide roles that control company settings and team access
+  </Card>
+  <Card title="Team Level" icon="users">
+    Team-specific roles that control team operations and member management
+  </Card>
+</CardGroup>
+
+## Company Roles
+
+Company roles provide organization-wide permissions and automatically cascade to teams within the company.
+
+### Company Owner (`company`)
+- **Full control** over the entire company
+- Can manage all company settings and configurations
+- Controls all teams and their members
+- Can assign and revoke any role within the company
+- Access to all company features and data
+
+### Organization Admin (`org_admin`)
+- **Administrative control** over company operations
+- Can manage company settings and team configurations
+- Can invite and manage team members across all teams
+- Controls company-wide payment and financial settings
+- Cannot modify company ownership or core structure
+
+### Organization Finance Admin (`org_finance_admin`)
+- **Financial management** capabilities across all teams
+- Can create and execute payments for any team
+- Manages company budgets and spending limits
+- Can view financial reports and transaction history
+- Cannot modify team structure or member permissions
+
+### Organization Viewer (`org_viewer`)
+- **Read-only access** to company information
+- Can view company details, teams, and financial data
+- Cannot create payments or modify any settings
+- Useful for auditors, accountants, or stakeholders
+
+## Team Roles
+
+Team roles provide granular control over specific team operations and member management.
+
+### Team Admin (`team_admin`)
+- **Full control** over team settings and members
+- Can create, modify, and delete team configurations
+- Manages team funds and payment limits
+- Can invite and remove team members
+- Access to all team features and data
+
+### Team Finance Admin (`team_finance_admin`)
+- **Financial management** capabilities for the team
+- Can create and execute payments for the team
+- Manages team budgets and spending limits
+- Can view team financial reports and transaction history
+- Cannot modify team structure or invite new members
+
+### Team Employee (`team_employee`)
+- **Standard team member** with payment capabilities
+- Can create and execute payments within team limits
+- Access to team funds for authorized transactions
+- Can view relevant team information
+- Cannot modify team settings or invite new members
+
+### Team Viewer (`team_viewer`)
+- **Read-only access** to team information
+- Can view team members, payments, and balances
+- Cannot create payments or modify any settings
+- Useful for auditors, accountants, or stakeholders
+
+### Contractor (`contractor`)
+- **External contractor** with limited team access
+- Can receive payments from the team
+- Limited access to team information
+- Cannot create payments or modify team settings
+
+## Role Permissions Matrix
+
+### Company-Level Permissions
+
+| Permission | Company Owner | Org Admin | Org Finance Admin | Org Viewer |
+|------------|---------------|-----------|-------------------|------------|
+| **View Company** | ✅ | ✅ | ✅ | ✅ |
+| **Manage Company Settings** | ✅ | ✅ | ❌ | ❌ |
+| **Manage Teams** | ✅ | ✅ | ❌ | ❌ |
+| **Company Payments** | ✅ | ✅ | ✅ | ❌ |
+| **Invite Members** | ✅ | ✅ | ❌ | ❌ |
+| **Manage Roles** | ✅ | ✅ | ❌ | ❌ |
+| **View Financial Data** | ✅ | ✅ | ✅ | ✅ |
+
+### Team-Level Permissions
+
+| Permission | Team Admin | Finance Admin | Employee | Viewer | Contractor |
+|------------|------------|---------------|----------|--------|------------|
+| **View Team** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Manage Team Settings** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Team Payments** | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **Invite Members** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Manage Roles** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **View Financial Data** | ✅ | ✅ | ✅ | ✅ | ❌ |
+
+## Role Hierarchy & Cascading
+
+### Company to Team Role Mapping
+
+When a user has a company role, it automatically grants them corresponding team roles:
+
+<CardGroup cols={2}>
+  <Card title="Company Role → Team Role" icon="arrow-down">
+    <ul>
+      <li><code>company</code> → <code>team_admin</code></li>
+      <li><code>org_admin</code> → <code>team_admin</code></li>
+      <li><code>org_finance_admin</code> → <code>team_finance_admin</code></li>
+      <li><code>org_viewer</code> → <code>team_viewer</code></li>
+    </ul>
+  </Card>
+  <Card title="Permission Inheritance" icon="shield">
+    Company roles automatically grant equivalent team permissions across all teams in the organization
+  </Card>
+</CardGroup>
+
+## How Roles Work in the API
+
+### Permission Validation
+
+The B2B API uses **permission validation** rather than role queries. When you make API calls, the system automatically checks if your user has the required permissions. If you lack permission, the API returns a 403 Forbidden error with details about what role is required.
+
+### Error-Based Permission Discovery
+
+Since there's no direct role query endpoint, you can discover user permissions through API responses. When an API call fails with a 403 error, the response will indicate what role is required for that operation.
+
+## Role Management
+
+### Assigning Roles
+
+Roles can be assigned through the invite system using the `/v2/invites/manager` endpoint.
+
+### Role Settings
+
+You can access role-specific settings for team members using the team member settings endpoints.
+
+## Security Best Practices
+
+<CardGroup cols={2}>
+  <Card title="🔐 Principle of Least Privilege" icon="shield">
+    - Assign the minimum role required for each user
+    - Regularly review and audit role assignments
+    - Remove unnecessary permissions promptly
+  </Card>
+  <Card title="👥 Role Rotation" icon="refresh-cw">
+    - Rotate admin roles regularly
+    - Have multiple admins for critical operations
+    - Document role changes for audit trails
+  </Card>
+  <Card title="📊 Monitoring" icon="activity">
+    - Monitor role assignments and changes
+    - Log all permission-related activities
+    - Set up alerts for suspicious role changes
+  </Card>
+  <Card title="🔍 Regular Audits" icon="search">
+    - Conduct regular permission audits
+    - Review inactive user permissions
+    - Validate role assignments against business needs
+  </Card>
+</CardGroup>
+
+## Error Handling
+
+Common role-related errors and solutions:
+
+| HTTP Status | Error | Description | Solution |
+|-------------|-------|-------------|----------|
+| `403` | `INSUFFICIENT_PERMISSIONS` | User lacks required role | Check user's current role and upgrade if needed |
+| `400` | `INVALID_ROLE` | Role doesn't exist or is invalid | Use one of the valid role types |
+| `404` | `USER_NOT_FOUND` | User doesn't exist in the entity | Verify user is a member of the entity |
+| `409` | `ROLE_CONFLICT` | Role assignment conflicts with existing role | Remove existing role before assigning new one |
+
+### Common Error Scenarios
+
+**Insufficient Permissions (403):**
+```json
+{
+  "success": false,
+  "data": "User us-abc123def456 must have admin access to team te-xyz789abc123. Current role: team_viewer"
+}
+```
+
+**Invalid Role Assignment (400):**
+```json
+{
+  "success": false,
+  "data": "Invalid role: super_admin. Valid roles are: team_admin, team_finance_admin, team_viewer"
+}
+```
+
+## Real-World Role Scenarios
+
+### Startup Organization
+
+**Company Level:**
+- **Founder**: `company` role with full control
+- **Co-founder**: `org_admin` role for administrative control
+- **Accountant**: `org_finance_admin` role for financial management
+- **Investor**: `org_viewer` role for read-only access
+
+**Team Level:**
+- **Engineering Lead**: `team_admin` role for team management
+- **Senior Developer**: `team_employee` role for standard operations
+- **Intern**: `team_viewer` role for limited access
+
+### Enterprise Organization
+
+**Company Level:**
+- **CEO**: `company` role with full control
+- **CTO**: `org_admin` role for technical operations
+- **CFO**: `org_finance_admin` role for financial management
+- **Auditor**: `org_viewer` role for compliance monitoring
+
+**Department Level:**
+- **Engineering Director**: `team_admin` role for engineering team
+- **Finance Manager**: `team_finance_admin` role for finance team
+- **HR Director**: `team_admin` role for HR team
+
+## Related Concepts
+
+<CardGroup cols={2}>
+  <Card title="Teams" icon="users" href="/concepts/teams">
+    Understanding team management
+  </Card>
+  <Card title="Entity Balance" icon="wallet" href="/concepts/entity-balance">
+    Balance management and permissions
+  </Card>
+  <Card title="Authentication" icon="key" href="/authentication">
+    SIWE authentication and role validation
+  </Card>
+  <Card title="Invites Integration" icon="mail" href="/guides/invites-integration">
+    Role assignment through invites
+  </Card>
+</CardGroup>
+
+<Note>
+  **Role Discovery**: Since there's no direct role query endpoint, you can discover user permissions by attempting API calls and handling 403 errors appropriately. The API will automatically validate permissions for each operation.
+</Note> 

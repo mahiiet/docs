@@ -1,0 +1,29 @@
+---
+title: 'Auth Integration Guide'
+description: 'End-to-end authentication flow with SIWE and JWT'
+---
+
+# Auth Integration Guide
+
+This guide walks you through the full authentication flow using SIWE and JWT.
+
+## Steps
+1. Request SIWE message from `/v2/auth/siwe`
+2. User signs with wallet
+3. Verify signature at `/v2/auth/verify`
+4. Use JWT for all API calls
+
+## Example (curl)
+```bash
+curl -X GET "https://api.rise.works/v2/auth/siwe?wallet=0x...&riseid=rise_..."
+curl -X POST "https://api.rise.works/v2/auth/verify" -d '{ "message": "...", "sig": "...", "nonce": "..." }'
+```
+
+## Troubleshooting
+- Ensure wallet is connected
+- Check for correct nonce
+- JWT expired? Re-authenticate
+
+<Note>
+See [Authentication](/authentication) for more details.
+</Note> 

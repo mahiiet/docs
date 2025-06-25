@@ -1,11 +1,12 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Rise Works",
+  "name": "Rise B2B API",
+  "description": "Global payroll for the modern workforce. Streamline payments to contractors and full-time employees around the globe with Rise's blockchain-first platform.",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#5e59ec",
+    "light": "#7c7aed",
+    "dark": "#4a46d9"
   },
   "favicon": "/favicon.svg",
   "navigation": {
@@ -18,69 +19,87 @@
             "pages": [
               "index",
               "quickstart",
-              "development"
+              "authentication",
+              "web3-integration"
             ]
           },
           {
-            "group": "Essentials",
+            "group": "Core Concepts",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/settings",
-              "essentials/navigation",
-              "essentials/reusable-snippets"
+              "concepts/riseid",
+              "concepts/entity-nanoid",
+              "concepts/entity-balance",
+              "concepts/teams",
+              "concepts/roles"
+            ]
+          },
+          {
+            "group": "Integration Guides",
+            "pages": [
+              "guides/auth-integration",
+              "guides/payment-integration",
+              "guides/team-management",
+              "guides/error-handling"
             ]
           }
         ]
       },
       {
-        "tab": "API Reference Mahendra",
-        "openapi": "api-reference/openapi.json"
+        "tab": "API Reference",
+        "openapi": "api-reference/openapi.yaml"
       }
     ],
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
+          "anchor": "Dashboard",
+          "href": "https://app.rise.works",
+          "icon": "dashboard"
         },
         {
-          "anchor": "Community",
-          "href": "https://mintlify.com/community",
-          "icon": "slack"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "Support",
+          "href": "mailto:Hello@Riseworks.io",
+          "icon": "message-circle"
         }
       ]
     }
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "https://cdn.prod.website-files.com/624f0c4263953ffe82f4e446/68092904f1a7fae9edc78b9b_RiseLogo.webp",
+    "dark": "https://cdn.prod.website-files.com/624f0c4263953ffe82f4e446/68092904f1a7fae9edc78b9b_RiseLogo.webp",
+    "width": 177,
+    "height": 24
   },
   "navbar": {
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:Hello@Riseworks.io"
+      },
+      {
+        "label": "Status",
+        "href": "https://status.rise.works"
+      },
+      {
+        "label": "Website",
+        "href": "https://www.riseworks.io"
+      },
+      {
+        "label": "Blog",
+        "href": "https://www.riseworks.io/blog"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "label": "Get Started",
+      "href": "https://app.rise.works"
     }
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://x.com/riseworks",
+      "github": "https://github.com/riseworks",
+      "linkedin": "https://linkedin.com/company/riseworks"
     }
   }
 }

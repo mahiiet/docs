@@ -1,0 +1,921 @@
+---
+title: 'Payment Integration Guide'
+description: 'Complete guide to integrating payments with Rise B2B API'
+---
+
+# Payment Integration Guide
+
+Rise provides a comprehensive payment system that enables batch payments with blockchain security. This guide covers the complete payment flow from creating payments to executing them on-chain.
+
+## Payment Flow Overview
+
+<Steps>
+  <Step title="Create Payment">
+    Submit payment details to create a draft payment group
+  </Step>
+  <Step title="Sign TypedData">
+    Sign the payment transaction using EIP-712 typed data
+  </Step>
+  <Step title="Submit Signature">
+    Submit the signed transaction to execute the payment
+  </Step>
+  <Step title="Monitor Status">
+    Track payment status and confirmations
+  </Step>
+</Steps>
+
+## Payment Types
+
+### Batch Payments
+Process multiple payments in a single transaction for efficiency and cost savings.
+
+### Individual Payments
+Process single payments with immediate execution.
+
+## Creating Payments
+
+### Step 1: Create Payment Draft
+
+First, create a payment draft with the recipient details:
+
+<RequestExample>
+```bash
+curl -X POST "https://api.rise.works/v2/payments" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "team_nanoid_123",
+    "to": [
+      {
+        "to": "user_nanoid_456",
+        "amount": "100.00",
+        "currency": "USD",
+        "description": "Salary payment"
+      },
+      {
+        "to": "user_nanoid_789",
+        "amount": "150.00", 
+        "currency": "USD",
+        "description": "Bonus payment"
+      }
+    ],
+    "pay_now": false,
+    "network": "arbitrum"
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "typed_data": {
+      "types": {
+        "EIP712Domain": [
+          {"name": "name", "type": "string"},
+          {"name": "version", "type": "string"},
+          {"name": "chainId", "type": "uint256"},
+          {"name": "verifyingContract", "type": "address"}
+        ],
+        "BatchPayment": [
+          {"name": "from", "type": "address"},
+          {"name": "recipients", "type": "address[]"},
+          {"name": "amounts", "type": "uint256[]"},
+          {"name": "nonce", "type": "uint256"},
+          {"name": "deadline", "type": "uint256"}
+        ]
+      },
+      "primaryType": "BatchPayment",
+      "domain": {
+        "name": "Rise Payments",
+        "version": "1",
+        "chainId": 42161,
+        "verifyingContract": "0x1234567890abcdef..."
+      },
+      "message": {
+        "from": "0x1234567890abcdef...",
+        "recipients": ["0xabcdef1234567890..."],
+        "amounts": ["100000000000000000000", "150000000000000000000"],
+        "nonce": 123456789,
+        "deadline": 1704067200
+      }
+    },
+    "payment_group_id": "pg_123456789",
+    "total_amount": "250.00"
+  }
+}
+```
+</ResponseExample>
+
+### Step 2: Sign the TypedData
+
+Sign the typed data using EIP-712 standard:
+
+<CodeGroup>
+
+```javascript
+import { ethers } from 'ethers';
+
+async function signPayment(typedData, walletAddress) {
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const signer = await provider.getSigner();
+  
+  // Sign the typed data
+  const signature = await signer.signTypedData(
+    typedData.domain,
+    { [typedData.primaryType]: typedData.message },
+    typedData.message
+  );
+  
+  return signature;
+}
+
+// Usage
+const signature = await signPayment(response.data.typed_data, walletAddress);
+```
+
+```typescript
+import { ethers } from 'ethers';
+
+interface TypedData {
+  types: Record<string, Array<{ name: string; type: string }>>;
+  primaryType: string;
+  domain: {
+    name: string;
+    version: string;
+    chainId: number;
+    verifyingContract: string;
+  };
+  message: Record<string, any>;
+}
+
+async function signPayment(typedData: TypedData, walletAddress: string): Promise<string> {
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const signer = await provider.getSigner();
+  
+  // Sign the typed data
+  const signature = await signer.signTypedData(
+    typedData.domain,
+    { [typedData.primaryType]: typedData.message },
+    typedData.message
+  );
+  
+  return signature;
+}
+```
+
+```react
+import { ethers } from 'ethers';
+import { useState } from 'react';
+
+function PaymentSigner({ typedData, onSigned }) {
+  const [signing, setSigning] = useState(false);
+  const [error, setError] = useState(null);
+
+  const signPayment = async () => {
+    setSigning(true);
+    setError(null);
+    
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      
+      const signature = await signer.signTypedData(
+        typedData.domain,
+        { [typedData.primaryType]: typedData.message },
+        typedData.message
+      );
+      
+      onSigned(signature);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSigning(false);
+    }
+  };
+
+  return (
+    <div>
+      <button onClick={signPayment} disabled={signing}>
+        {signing ? 'Signing...' : 'Sign Payment'}
+      </button>
+      {error && <p className="error">Error: {error}</p>}
+    </div>
+  );
+}
+```
+
+```python
+from eth_account import Account
+from eth_account.messages import encode_structured_data
+import json
+
+def sign_payment(typed_data: dict, private_key: str) -> str:
+    # Sign the typed data
+    message = encode_structured_data(typed_data)
+    signed_message = Account.sign_message(message, private_key)
+    
+    return signed_message.signature.hex()
+```
+
+</CodeGroup>
+
+### Step 3: Submit Signed Payment
+
+Submit the signed payment to execute the transaction:
+
+<RequestExample>
+```bash
+curl -X PUT "https://api.rise.works/v2/payments" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "signer": "0x1234567890abcdef...",
+    "from": "team_nanoid_123",
+    "to": [
+      {
+        "to": "user_nanoid_456",
+        "amount": "100.00",
+        "currency": "USD",
+        "description": "Salary payment"
+      },
+      {
+        "to": "user_nanoid_789", 
+        "amount": "150.00",
+        "currency": "USD",
+        "description": "Bonus payment"
+      }
+    ],
+    "pay_now": false,
+    "typed_data": {
+      "types": {
+        "EIP712Domain": [
+          {"name": "name", "type": "string"},
+          {"name": "version", "type": "string"},
+          {"name": "chainId", "type": "uint256"},
+          {"name": "verifyingContract", "type": "address"}
+        ],
+        "BatchPayment": [
+          {"name": "from", "type": "address"},
+          {"name": "recipients", "type": "address[]"},
+          {"name": "amounts", "type": "uint256[]"},
+          {"name": "nonce", "type": "uint256"},
+          {"name": "deadline", "type": "uint256"}
+        ]
+      },
+      "primaryType": "BatchPayment",
+      "domain": {
+        "name": "Rise Payments",
+        "version": "1",
+        "chainId": 42161,
+        "verifyingContract": "0x1234567890abcdef..."
+      },
+      "message": {
+        "from": "0x1234567890abcdef...",
+        "recipients": ["0xabcdef1234567890..."],
+        "amounts": ["100000000000000000000", "150000000000000000000"],
+        "nonce": 123456789,
+        "deadline": 1704067200
+      }
+    },
+    "signature": "0x1234567890abcdef..."
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "transaction": {
+      "hash": "0x1234567890abcdef...",
+      "status": "pending",
+      "block_number": null,
+      "gas_used": null,
+      "gas_price": null
+    },
+    "payments": [
+      {
+        "id": "payment_123",
+        "recipient": "user_nanoid_456",
+        "amount": "100.00",
+        "currency": "USD",
+        "status": "pending",
+        "transaction_hash": "0x1234567890abcdef..."
+      },
+      {
+        "id": "payment_124",
+        "recipient": "user_nanoid_789",
+        "amount": "150.00", 
+        "currency": "USD",
+        "status": "pending",
+        "transaction_hash": "0x1234567890abcdef..."
+      }
+    ]
+  }
+}
+```
+</ResponseExample>
+
+## Complete Payment Integration Example
+
+Here's a complete example of the payment integration:
+
+<CodeGroup>
+
+```javascript
+import { ethers } from 'ethers';
+
+class RisePayments {
+  constructor(baseUrl = 'https://api.rise.works', jwtToken) {
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async createBatchPayment(from, recipients, payNow = false) {
+    const paymentData = {
+      from,
+      to: recipients,
+      pay_now: payNow,
+      network: 'arbitrum'
+    };
+
+    const response = await fetch(`${this.baseUrl}/v2/payments`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(paymentData)
+    });
+
+    return response.json();
+  }
+
+  async signPayment(typedData, walletAddress) {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    
+    const signature = await signer.signTypedData(
+      typedData.domain,
+      { [typedData.primaryType]: typedData.message },
+      typedData.message
+    );
+    
+    return signature;
+  }
+
+  async executePayment(signer, from, recipients, typedData, signature) {
+    const paymentData = {
+      signer,
+      from,
+      to: recipients,
+      pay_now: false,
+      typed_data: typedData,
+      signature
+    };
+
+    const response = await fetch(`${this.baseUrl}/v2/payments`, {
+      method: 'PUT',
+      headers: this.headers,
+      body: JSON.stringify(paymentData)
+    });
+
+    return response.json();
+  }
+
+  async processBatchPayment(from, recipients, walletAddress) {
+    try {
+      // Step 1: Create payment draft
+      const draft = await this.createBatchPayment(from, recipients);
+      
+      if (!draft.success) {
+        throw new Error(`Failed to create payment: ${draft.data}`);
+      }
+
+      // Step 2: Sign the payment
+      const signature = await this.signPayment(
+        draft.data.typed_data, 
+        walletAddress
+      );
+
+      // Step 3: Execute the payment
+      const result = await this.executePayment(
+        walletAddress,
+        from,
+        recipients,
+        draft.data.typed_data,
+        signature
+      );
+
+      return result;
+    } catch (error) {
+      console.error('Payment processing failed:', error);
+      throw error;
+    }
+  }
+}
+```
+
+```typescript
+import { ethers } from 'ethers';
+
+interface Recipient {
+  to: string;
+  amount: string;
+  currency: string;
+  description: string;
+}
+
+interface TypedData {
+  types: Record<string, Array<{ name: string; type: string }>>;
+  primaryType: string;
+  domain: {
+    name: string;
+    version: string;
+    chainId: number;
+    verifyingContract: string;
+  };
+  message: Record<string, any>;
+}
+
+interface PaymentResponse {
+  success: boolean;
+  data: {
+    typed_data: TypedData;
+    payment_group_id: string;
+    total_amount: string;
+  };
+}
+
+interface ExecutionResponse {
+  success: boolean;
+  data: {
+    transaction: {
+      hash: string;
+      status: string;
+      block_number: number | null;
+      gas_used: string | null;
+      gas_price: string | null;
+    };
+    payments: Array<{
+      id: string;
+      recipient: string;
+      amount: string;
+      currency: string;
+      status: string;
+      transaction_hash: string;
+    }>;
+  };
+}
+
+class RisePayments {
+  private baseUrl: string;
+  private headers: Record<string, string>;
+
+  constructor(baseUrl: string = 'https://api.rise.works', jwtToken: string) {
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async createBatchPayment(
+    from: string, 
+    recipients: Recipient[], 
+    payNow: boolean = false
+  ): Promise<PaymentResponse> {
+    const paymentData = {
+      from,
+      to: recipients,
+      pay_now: payNow,
+      network: 'arbitrum'
+    };
+
+    const response = await fetch(`${this.baseUrl}/v2/payments`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(paymentData)
+    });
+
+    return response.json();
+  }
+
+  async signPayment(typedData: TypedData, walletAddress: string): Promise<string> {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    
+    const signature = await signer.signTypedData(
+      typedData.domain,
+      { [typedData.primaryType]: typedData.message },
+      typedData.message
+    );
+    
+    return signature;
+  }
+
+  async executePayment(
+    signer: string,
+    from: string,
+    recipients: Recipient[],
+    typedData: TypedData,
+    signature: string
+  ): Promise<ExecutionResponse> {
+    const paymentData = {
+      signer,
+      from,
+      to: recipients,
+      pay_now: false,
+      typed_data: typedData,
+      signature
+    };
+
+    const response = await fetch(`${this.baseUrl}/v2/payments`, {
+      method: 'PUT',
+      headers: this.headers,
+      body: JSON.stringify(paymentData)
+    });
+
+    return response.json();
+  }
+
+  async processBatchPayment(
+    from: string, 
+    recipients: Recipient[], 
+    walletAddress: string
+  ): Promise<ExecutionResponse> {
+    try {
+      // Step 1: Create payment draft
+      const draft = await this.createBatchPayment(from, recipients);
+      
+      if (!draft.success) {
+        throw new Error(`Failed to create payment: ${draft.data}`);
+      }
+
+      // Step 2: Sign the payment
+      const signature = await this.signPayment(
+        draft.data.typed_data, 
+        walletAddress
+      );
+
+      // Step 3: Execute the payment
+      const result = await this.executePayment(
+        walletAddress,
+        from,
+        recipients,
+        draft.data.typed_data,
+        signature
+      );
+
+      return result;
+    } catch (error) {
+      console.error('Payment processing failed:', error);
+      throw error;
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+## React Hook for Payments
+
+```typescript
+import { useState } from 'react';
+import { ethers } from 'ethers';
+
+interface UseRisePayments {
+  processing: boolean;
+  error: string | null;
+  processPayment: (from: string, recipients: Recipient[], walletAddress: string) => Promise<ExecutionResponse>;
+}
+
+export function useRisePayments(jwtToken: string): UseRisePayments {
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const processPayment = async (from: string, recipients: Recipient[], walletAddress: string) => {
+    setProcessing(true);
+    setError(null);
+    
+    try {
+      const payments = new RisePayments('https://api.rise.works', jwtToken);
+      const result = await payments.processBatchPayment(from, recipients, walletAddress);
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Payment failed';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  return { processing, error, processPayment };
+}
+```
+
+## Mobile Integration (React Native)
+
+```typescript
+import { ethers } from 'ethers';
+import { WalletConnectModal } from '@walletconnect/modal-react-native';
+
+// For React Native, use WalletConnect or similar
+const signPaymentMobile = async (typedData: TypedData) => {
+  const provider = new ethers.JsonRpcProvider('https://arb1.arbitrum.io/rpc');
+  
+  // Connect via WalletConnect
+  const connector = new WalletConnectModal({
+    projectId: 'your-project-id',
+    chains: [42161], // Arbitrum
+  });
+  
+  await connector.connect();
+  const signer = await provider.getSigner();
+  
+  return await signer.signTypedData(
+    typedData.domain,
+    { [typedData.primaryType]: typedData.message },
+    typedData.message
+  );
+};
+```
+
+## Querying Payment History
+
+Retrieve payment history with filtering options:
+
+<RequestExample>
+```bash
+curl -X GET "https://api.rise.works/v2/payments?team_nanoid=team_123&state=completed&start_date=2024-01-01&end_date=2024-01-31&query_type=payable" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "payment_123",
+        "recipient": "user_nanoid_456",
+        "amount": "100.00",
+        "currency": "USD",
+        "description": "Salary payment",
+        "status": "completed",
+        "created_at": "2024-01-15T10:30:00Z",
+        "completed_at": "2024-01-15T10:35:00Z",
+        "transaction_hash": "0x1234567890abcdef..."
+      }
+    ]
+  }
+}
+```
+</ResponseExample>
+
+## Payment Status Tracking
+
+Monitor payment status through the transaction hash:
+
+<CodeGroup>
+
+```javascript
+class PaymentTracker {
+  constructor(baseUrl = 'https://api.rise.works', jwtToken) {
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async getPaymentStatus(paymentId) {
+    const response = await fetch(
+      `${this.baseUrl}/v2/payments/${paymentId}`,
+      { headers: this.headers }
+    );
+    return response.json();
+  }
+
+  async waitForConfirmation(transactionHash, maxAttempts = 30) {
+    const provider = new ethers.JsonRpcProvider('https://arb1.arbitrum.io/rpc');
+    
+    for (let i = 0; i < maxAttempts; i++) {
+      const receipt = await provider.getTransactionReceipt(transactionHash);
+      
+      if (receipt && receipt.confirmations > 0) {
+        return {
+          confirmed: true,
+          blockNumber: receipt.blockNumber,
+          gasUsed: receipt.gasUsed.toString(),
+          status: receipt.status === 1 ? 'success' : 'failed'
+        };
+      }
+      
+      // Wait 10 seconds before next check
+      await new Promise(resolve => setTimeout(resolve, 10000));
+    }
+    
+    throw new Error('Transaction confirmation timeout');
+  }
+}
+```
+
+```typescript
+interface PaymentStatus {
+  id: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  transaction_hash: string;
+  created_at: string;
+  completed_at?: string;
+}
+
+interface TransactionReceipt {
+  confirmed: boolean;
+  blockNumber: number;
+  gasUsed: string;
+  status: 'success' | 'failed';
+}
+
+class PaymentTracker {
+  private baseUrl: string;
+  private headers: Record<string, string>;
+
+  constructor(baseUrl: string = 'https://api.rise.works', jwtToken: string) {
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async getPaymentStatus(paymentId: string): Promise<PaymentStatus> {
+    const response = await fetch(
+      `${this.baseUrl}/v2/payments/${paymentId}`,
+      { headers: this.headers }
+    );
+    return response.json();
+  }
+
+  async waitForConfirmation(
+    transactionHash: string, 
+    maxAttempts: number = 30
+  ): Promise<TransactionReceipt> {
+    const provider = new ethers.JsonRpcProvider('https://arb1.arbitrum.io/rpc');
+    
+    for (let i = 0; i < maxAttempts; i++) {
+      const receipt = await provider.getTransactionReceipt(transactionHash);
+      
+      if (receipt && receipt.confirmations > 0) {
+        return {
+          confirmed: true,
+          blockNumber: receipt.blockNumber,
+          gasUsed: receipt.gasUsed.toString(),
+          status: receipt.status === 1 ? 'success' : 'failed'
+        };
+      }
+      
+      // Wait 10 seconds before next check
+      await new Promise(resolve => setTimeout(resolve, 10000));
+    }
+    
+    throw new Error('Transaction confirmation timeout');
+  }
+}
+```
+
+</CodeGroup>
+
+## Error Handling
+
+Common payment errors and solutions:
+
+| Error Code | Description | Solution |
+|------------|-------------|----------|
+| `INSUFFICIENT_BALANCE` | Not enough funds in the source account | Check entity balance before creating payments |
+| `INVALID_SIGNATURE` | TypedData signature verification failed | Ensure correct signing of the typed data |
+| `EXPIRED_DEADLINE` | Payment deadline has passed | Create a new payment with updated deadline |
+| `INVALID_RECIPIENT` | Recipient address is not valid | Verify recipient addresses and permissions |
+| `PAYMENT_LIMIT_EXCEEDED` | Payment amount exceeds limits | Check payment limits for the entity |
+
+## Security Best Practices
+
+<Warning>
+  **Always verify payment details** before signing. Double-check amounts, recipients, and payment descriptions.
+</Warning>
+
+- **Signature Verification**: Always verify typed data signatures on-chain
+- **Deadline Management**: Set appropriate deadlines for payment execution
+- **Amount Validation**: Validate payment amounts before submission
+- **Recipient Verification**: Ensure recipients have valid Rise accounts
+- **Gas Estimation**: Estimate gas costs before executing payments
+
+## Testing Payments
+
+For testing, use the development environment:
+
+<CodeGroup>
+
+```javascript
+// Development configuration
+const DEV_CONFIG = {
+  baseUrl: 'https://api-dev.rise.works',
+  network: 'arbitrum-goerli',
+  chainId: 421613
+};
+
+// Test payment with small amounts
+const testRecipients = [
+  {
+    to: 'test_user_nanoid',
+    amount: '0.01',
+    currency: 'USD',
+    description: 'Test payment'
+  }
+];
+```
+
+```typescript
+interface TestConfig {
+  baseUrl: string;
+  network: string;
+  chainId: number;
+}
+
+const DEV_CONFIG: TestConfig = {
+  baseUrl: 'https://api-dev.rise.works',
+  network: 'arbitrum-goerli',
+  chainId: 421613
+};
+
+const testRecipients: Recipient[] = [
+  {
+    to: 'test_user_nanoid',
+    amount: '0.01',
+    currency: 'USD',
+    description: 'Test payment'
+  }
+];
+```
+
+</CodeGroup>
+
+## Real-World Integration Example
+
+### Payroll System Integration
+
+```typescript
+interface PayrollRun {
+  id: string;
+  employees: Array<{
+    user_nanoid: string;
+    amount: string;
+    description: string;
+  }>;
+  team_nanoid: string;
+  pay_date: string;
+}
+
+class PayrollSystem {
+  private payments: RisePayments;
+
+  constructor(jwtToken: string) {
+    this.payments = new RisePayments('https://api.rise.works', jwtToken);
+  }
+
+  async processPayrollRun(payrollRun: PayrollRun, walletAddress: string) {
+    const recipients = payrollRun.employees.map(emp => ({
+      to: emp.user_nanoid,
+      amount: emp.amount,
+      currency: 'USD',
+      description: `${emp.description} - ${payrollRun.pay_date}`
+    }));
+
+    try {
+      const result = await this.payments.processBatchPayment(
+        payrollRun.team_nanoid,
+        recipients,
+        walletAddress
+      );
+
+      // Store payroll run result
+      await this.storePayrollResult(payrollRun.id, result);
+
+      return result;
+    } catch (error) {
+      console.error(`Payroll run ${payrollRun.id} failed:`, error);
+      throw error;
+    }
+  }
+
+  private async storePayrollResult(payrollId: string, result: ExecutionResponse) {
+    // Store in your database
+    console.log(`Payroll ${payrollId} processed:`, result.data.transaction.hash);
+  }
+}

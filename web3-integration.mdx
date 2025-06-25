@@ -1,0 +1,532 @@
+---
+title: 'Web3 Integration'
+description: 'Integrate wallets and typed data signing with Rise B2B API'
+---
+
+# Web3 Integration
+
+Rise B2B API is designed for seamless integration with Web3 wallets and smart contract standards. This guide covers wallet integration and EIP-712 typed data signing for secure blockchain operations.
+
+<CardGroup cols={2}>
+  <Card title="🔐 Secure" icon="shield">
+    EIP-712 typed data signing for enhanced security
+  </Card>
+  <Card title="⚡ Efficient" icon="zap">
+    Gas-optimized transactions with structured data
+  </Card>
+  <Card title="🌐 Compatible" icon="globe">
+    Works with MetaMask, WalletConnect, and other wallets
+  </Card>
+  <Card title="📱 User-Friendly" icon="smartphone">
+    Human-readable messages in wallet interfaces
+  </Card>
+</CardGroup>
+
+## Supported Wallets
+
+Rise B2B API supports all major Web3 wallets:
+
+<CardGroup cols={3}>
+  <Card title="MetaMask" icon="wallet">
+    Most popular Ethereum wallet
+  </Card>
+  <Card title="WalletConnect" icon="link">
+    Multi-wallet connection protocol
+  </Card>
+  <Card title="Coinbase Wallet" icon="credit-card">
+    Coinbase's Web3 wallet
+  </Card>
+  <Card title="Rainbow" icon="droplets">
+    Beautiful mobile wallet
+  </Card>
+  <Card title="Trust Wallet" icon="shield">
+    Binance's mobile wallet
+  </Card>
+  <Card title="Any EIP-1193" icon="check-circle">
+    Compatible with any EIP-1193 wallet
+  </Card>
+</CardGroup>
+
+## EIP-712 Typed Data Signing
+
+Many Rise operations (payments, team management, invites) require **EIP-712 typed data signing** for enhanced security and gas efficiency.
+
+### What is EIP-712 Typed Data?
+
+EIP-712 is a standard for typed data signing that provides:
+
+- **Human-readable messages** in wallet interfaces
+- **Type safety** to prevent signature replay attacks
+- **Gas efficiency** compared to raw message signing
+- **Better security** through structured data validation
+
+### Typed Data Structure
+
+EIP-712 typed data consists of four main parts:
+
+<CodeGroup>
+
+```javascript
+const typedData = {
+  // Domain information for the contract
+  domain: {
+    name: "RiseIDForwarder",
+    version: "1.0.0",
+    chainId: 421614,
+    verifyingContract: "0xc1d606799d134b3f4cC7c50277Ebc695c5cf1DF0"
+  },
+  
+  // Type definitions for the data structure
+  types: {
+    SetRolesForwardRequest: [
+      { name: "from", type: "address" },
+      { name: "to", type: "address" },
+      { name: "salt", type: "uint64" },
+      { name: "expires", type: "uint48" },
+      { name: "data", type: "SetRole[]" }
+    ],
+    SetRole: [
+      { name: "role", type: "uint8" },
+      { name: "account", type: "address" }
+    ]
+  },
+  
+  // The actual data to be signed
+  typed_data: {
+    from: "0x8163F96be85606d8c9D4f13CECCDe7F4bcf68c7F",
+    to: "0xB812804Bbefb4a6214444221759A2B66277785Da",
+    salt: "57824",
+    expires: "1750492712",
+    data: [
+      {
+        role: "2",
+        account: "0x16B00CFc4BcAe3317201549a46027E279DFF77A5"
+      }
+    ]
+  },
+  
+  // The primary type being signed
+  primary_type: "SetRolesForwardRequest"
+};
+```
+
+```typescript
+interface TypedData {
+  domain: {
+    name: string;
+    version: string;
+    chainId: number;
+    verifyingContract: string;
+  };
+  types: Record<string, Array<{ name: string; type: string }>>;
+  typed_data: Record<string, any>;
+  primary_type: string;
+}
+```
+
+</CodeGroup>
+
+### Node.js Typed Data Signing
+
+Here's how to sign typed data using ethers.js in a Node.js environment:
+
+```javascript
+require('dotenv').config();
+const { ethers } = require('ethers');
+
+const signTypedData = async () => {
+  // Your wallet private key (never expose this in production!)
+  const walletPrivateKey = process.env.WALLET_PRIVATE_KEY;
+  
+  // Typed data structure (provided by Rise API)
+  const typedData = {
+    domain: {
+      name: "RiseIDForwarder",
+      version: "1.0.0",
+      chainId: 421614,
+      verifyingContract: "0xc1d606799d134b3f4cC7c50277Ebc695c5cf1DF0"
+    },
+    types: {
+      SetRolesForwardRequest: [
+        { name: "from", type: "address" },
+        { name: "to", type: "address" },
+        { name: "salt", type: "uint64" },
+        { name: "expires", type: "uint48" },
+        { name: "data", type: "SetRole[]" }
+      ],
+      SetRole: [
+        { name: "role", type: "uint8" },
+        { name: "account", type: "address" }
+      ]
+    },
+    typed_data: {
+      from: "0x8163F96be85606d8c9D4f13CECCDe7F4bcf68c7F",
+      to: "0xB812804Bbefb4a6214444221759A2B66277785Da",
+      salt: "57824",
+      expires: "1750492712",
+      data: [
+        {
+          role: "2",
+          account: "0x16B00CFc4BcAe3317201549a46027E279DFF77A5"
+        }
+      ]
+    },
+    primary_type: "SetRolesForwardRequest"
+  };
+
+  // Create wallet instance
+  const wallet = new ethers.Wallet(walletPrivateKey);
+  console.log('Wallet Address:', wallet.address);
+
+  // Sign the typed data
+  const signature = await wallet.signTypedData(
+    typedData.domain,
+    typedData.types,
+    typedData.typed_data
+  );
+
+  console.log('Signature:', signature);
+
+  // Verify the signature (optional)
+  const recoveredAddress = await ethers.verifyTypedData(
+    typedData.domain,
+    typedData.types,
+    typedData.typed_data,
+    signature
+  );
+
+  console.log('Recovered Address:', recoveredAddress);
+  console.log('Signature Valid:', recoveredAddress === wallet.address);
+
+  return { signature, recoveredAddress };
+};
+
+// Execute the signing
+signTypedData()
+  .then((data) => console.log('Success:', data))
+  .catch((error) => console.error('Error:', error));
+```
+
+### Browser-Based Typed Data Signing
+
+For browser applications, use wallet providers like MetaMask:
+
+<CodeGroup>
+
+```javascript
+// Browser-based signing with MetaMask
+const signTypedDataInBrowser = async (typedData) => {
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const signer = await provider.getSigner();
+  
+  const signature = await signer.signTypedData(
+    typedData.domain,
+    typedData.types,
+    typedData.typed_data
+  );
+  
+  return signature;
+};
+```
+
+```typescript
+import { ethers } from 'ethers';
+
+interface TypedData {
+  domain: {
+    name: string;
+    version: string;
+    chainId: number;
+    verifyingContract: string;
+  };
+  types: Record<string, Array<{ name: string; type: string }>>;
+  typed_data: Record<string, any>;
+  primary_type: string;
+}
+
+const signTypedDataInBrowser = async (typedData: TypedData): Promise<string> => {
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const signer = await provider.getSigner();
+  
+  const signature = await signer.signTypedData(
+    typedData.domain,
+    typedData.types,
+    typedData.typed_data
+  );
+  
+  return signature;
+};
+```
+
+</CodeGroup>
+
+### React Hook for Typed Data Signing
+
+```typescript
+import { useState } from 'react';
+import { ethers } from 'ethers';
+
+interface UseTypedDataSigning {
+  signing: boolean;
+  error: string | null;
+  signTypedData: (typedData: any) => Promise<string | null>;
+}
+
+export function useTypedDataSigning(): UseTypedDataSigning {
+  const [signing, setSigning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const signTypedData = async (typedData: any): Promise<string | null> => {
+    setSigning(true);
+    setError(null);
+    
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      
+      const signature = await signer.signTypedData(
+        typedData.domain,
+        typedData.types,
+        typedData.typed_data
+      );
+      
+      return signature;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Signing failed';
+      setError(errorMessage);
+      return null;
+    } finally {
+      setSigning(false);
+    }
+  };
+
+  return { signing, error, signTypedData };
+}
+```
+
+## When to Use Typed Data Signing
+
+Typed data signing is required for the following Rise operations:
+
+<CardGroup cols={2}>
+  <Card title="💰 Payments" icon="credit-card">
+    Creating and executing payments
+  </Card>
+  <Card title="👥 Team Management" icon="users">
+    Adding/removing team members
+  </Card>
+  <Card title="📧 Invites" icon="mail">
+    Sending team invitations
+  </Card>
+  <Card title="⚙️ Settings" icon="settings">
+    Updating team settings
+  </Card>
+  <Card title="🔐 Permissions" icon="lock">
+    Managing role permissions
+  </Card>
+  <Card title="💸 Withdrawals" icon="arrow-up">
+    Processing withdrawals
+  </Card>
+</CardGroup>
+
+## Complete Integration Example
+
+Here's a complete example showing how to integrate typed data signing with Rise API:
+
+```javascript
+const { ethers } = require('ethers');
+require('dotenv').config();
+
+class RiseWeb3Integration {
+  constructor(baseUrl = 'https://api.rise.works', jwtToken) {
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'Authorization': `Bearer ${jwtToken}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  // Step 1: Get typed data from Rise API
+  async getTypedData(operation, data) {
+    const response = await fetch(`${this.baseUrl}/v2/${operation}/typed-data`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(data)
+    });
+    
+    const result = await response.json();
+    return result.data.typed_data;
+  }
+
+  // Step 2: Sign the typed data
+  async signTypedData(typedData, privateKey) {
+    const wallet = new ethers.Wallet(privateKey);
+    
+    const signature = await wallet.signTypedData(
+      typedData.domain,
+      typedData.types,
+      typedData.typed_data
+    );
+    
+    return signature;
+  }
+
+  // Step 3: Submit signed data to Rise API
+  async submitSignedData(operation, data, signature) {
+    const response = await fetch(`${this.baseUrl}/v2/${operation}/execute`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({
+        ...data,
+        signature
+      })
+    });
+    
+    return await response.json();
+  }
+
+  // Complete flow example
+  async executeOperation(operation, data, privateKey) {
+    try {
+      // Get typed data from API
+      const typedData = await this.getTypedData(operation, data);
+      console.log('Typed data received:', typedData);
+
+      // Sign the typed data
+      const signature = await this.signTypedData(typedData, privateKey);
+      console.log('Signature generated:', signature);
+
+      // Submit to API
+      const result = await this.submitSignedData(operation, data, signature);
+      console.log('Operation completed:', result);
+
+      return result;
+    } catch (error) {
+      console.error('Operation failed:', error);
+      throw error;
+    }
+  }
+}
+
+// Usage example
+const riseIntegration = new RiseWeb3Integration(
+  'https://api.rise.works',
+  'your-jwt-token'
+);
+
+// Example: Create a payment
+const paymentData = {
+  from: 'team_nanoid_123',
+  to: [
+    {
+      to: 'user_nanoid_456',
+      amount_cents: 10000,
+      currency_symbol: 'USD'
+    }
+  ],
+  pay_now: true
+};
+
+riseIntegration.executeOperation('payments', paymentData, process.env.WALLET_PRIVATE_KEY)
+  .then(result => console.log('Payment successful:', result))
+  .catch(error => console.error('Payment failed:', error));
+```
+
+## Security Best Practices
+
+<CardGroup cols={2}>
+  <Card title="🔑 Private Keys" icon="shield">
+    - Never store private keys in client-side code
+    - Use environment variables for server-side operations
+    - Consider hardware wallets for high-value transactions
+  </Card>
+  <Card title="✅ Verification" icon="check-circle">
+    - Always verify signatures before submitting
+    - Check contract addresses and chain IDs
+    - Validate typed data structure
+  </Card>
+  <Card title="🔒 Environment" icon="lock">
+    - Use HTTPS for all API communications
+    - Implement proper error handling
+    - Log security events for auditing
+  </Card>
+  <Card title="⏰ Timing" icon="clock">
+    - Respect expiration times in typed data
+    - Implement retry logic for failed transactions
+    - Monitor transaction status
+  </Card>
+</CardGroup>
+
+## Error Handling
+
+Common errors when working with typed data signing:
+
+| Error | Description | Solution |
+|-------|-------------|----------|
+| `INVALID_SIGNATURE` | Signature verification failed | Ensure the correct wallet is signing |
+| `EXPIRED_DATA` | Typed data has expired | Request fresh typed data from API |
+| `WRONG_CHAIN` | Incorrect network connected | Switch to the correct network |
+| `INSUFFICIENT_GAS` | Not enough gas for transaction | Ensure wallet has sufficient funds |
+
+## Environment Configuration
+
+<CodeGroup>
+
+```javascript
+// Development (Arbitrum Sepolia)
+const DEV_CONFIG = {
+  baseUrl: 'https://dev-pay-api.riseworks.dev',
+  chainId: 421614,
+  verifyingContract: '0x...' // Sepolia contract address
+};
+
+// Production (Arbitrum mainnet)
+const PROD_CONFIG = {
+  baseUrl: 'https://pay-api.riseworks.io',
+  chainId: 42161,
+  verifyingContract: '0x...' // Mainnet contract address
+};
+```
+
+```typescript
+interface Web3Config {
+  baseUrl: string;
+  chainId: number;
+  verifyingContract: string;
+}
+
+const DEV_CONFIG: Web3Config = {
+  baseUrl: 'https://dev-pay-api.riseworks.dev',
+  chainId: 421614,
+  verifyingContract: '0x...'
+};
+
+const PROD_CONFIG: Web3Config = {
+  baseUrl: 'https://pay-api.riseworks.io',
+  chainId: 42161,
+  verifyingContract: '0x...'
+};
+```
+
+</CodeGroup>
+
+## Related Guides
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/authentication">
+    Learn about SIWE authentication
+  </Card>
+  <Card title="Payment Integration" icon="credit-card" href="/guides/payment-integration">
+    Complete payment flow with typed data
+  </Card>
+  <Card title="Team Management" icon="users" href="/guides/team-management">
+    Managing teams with Web3
+  </Card>
+  <Card title="Invites Integration" icon="mail" href="/guides/invites-integration">
+    User onboarding flow
+  </Card>
+</CardGroup>
+
+<Note>
+  **Need help?** Check out our [Payment Integration Guide](/guides/payment-integration) for a complete example of typed data signing in action.
+</Note> 
