@@ -140,7 +140,7 @@ function validateRiseID(riseid) {
   // RiseID must be exactly 42 characters (0x + 40 hex chars)
   const riseidRegex = /^0x[a-fA-F0-9]{40}$/;
   return riseidRegex.test(riseid) && riseid.length === 42;
-}
+    }
 
 // Example usage
 const riseid = "0x1234567890abcdef1234567890abcdef12345678";

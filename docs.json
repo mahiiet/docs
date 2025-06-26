@@ -20,6 +20,8 @@
               "index",
               "quickstart",
               "authentication",
+              "guides/migrating-from-v1",
+              "guides/v1-vs-b2b-comparison",
               "web3-integration"
             ]
           },
@@ -30,7 +32,9 @@
               "concepts/entity-nanoid",
               "concepts/entity-balance",
               "concepts/teams",
-              "concepts/roles"
+              "concepts/roles",
+              "concepts/permissions",
+              "concepts/payments"
             ]
           },
           {
@@ -39,6 +43,7 @@
               "guides/auth-integration",
               "guides/payment-integration",
               "guides/team-management",
+              "guides/invites-integration",
               "guides/error-handling"
             ]
           }
@@ -46,7 +51,34 @@
       },
       {
         "tab": "API Reference",
-        "openapi": "api-reference/openapi.yaml"
+        "groups": [
+          {
+            "group": "Reference",
+            "pages": [
+              "api-reference/introduction",
+              "api-reference/endpoint/get",
+              "api-reference/endpoint/create",
+              "api-reference/endpoint/delete",
+              "api-reference/endpoint/webhook"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Essentials",
+        "groups": [
+          {
+            "group": "Essentials",
+            "pages": [
+              "essentials/code",
+              "essentials/images",
+              "essentials/markdown",
+              "essentials/navigation",
+              "essentials/reusable-snippets",
+              "essentials/settings"
+            ]
+          }
+        ]
       }
     ],
     "global": {

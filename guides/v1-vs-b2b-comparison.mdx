@@ -1,0 +1,265 @@
+---
+title: 'V1 vs B2B API Comparison'
+description: 'Complete comparison between Rise V1 API and B2B API endpoints'
+---
+
+# V1 vs B2B API Comparison
+
+This page provides a comprehensive comparison between the legacy V1 API and the new B2B API. Use this guide to understand what has changed and how to migrate your existing integrations.
+
+<CardGroup cols={2}>
+  <Card title="🔴 V1 API (Legacy)" icon="alert-triangle">
+    Deprecated endpoints with limited functionality
+  </Card>
+  <Card title="🟢 B2B API (Current)" icon="check-circle">
+    Enhanced endpoints with blockchain security
+  </Card>
+  <Card title="🔐 Security Upgrade" icon="shield">
+    SIWE authentication with improved security
+  </Card>
+  <Card title="📊 Enhanced Features" icon="bar-chart">
+    Better performance and developer experience
+  </Card>
+</CardGroup>
+
+## Authentication Comparison
+
+### V1 Authentication
+- **Method**: SIWE (Sign-In with Ethereum)
+- **Endpoints**: 
+  - `GET /v1/api/siwe` - Get SIWE message
+  - `POST /v1/api/siwe` - Verify signature and get JWT
+- **Headers**: `X-Auth-Token: <jwt>`
+
+### B2B Authentication
+- **Method**: SIWE (Sign-In with Ethereum) - Enhanced
+- **Endpoints**:
+  - `GET /v2/auth/siwe` - Get SIWE message
+  - `POST /v2/auth/verify` - Verify signature and get JWT
+- **Headers**: `Authorization: Bearer <jwt>`
+
+### Code Comparison
+
+**V1 Authentication:**
+```javascript
+// Get SIWE message
+const siweResponse = await fetch('https://api.rise.works/v1/api/siwe', {
+  method: 'GET'
+});
+const { siwe } = await siweResponse.json();
+
+// Sign and verify
+const signature = await signer.signMessage(siwe);
+const verifyResponse = await fetch('https://api.rise.works/v1/api/siwe', {
+  method: 'POST',
+  body: JSON.stringify({ message: siwe, signature })
+});
+const { token } = await verifyResponse.json();
+
+// Use in requests
+const response = await fetch('/v1/teams', {
+  headers: { 'X-Auth-Token': token }
+});
+```
+
+**B2B Authentication:**
+```javascript
+// Get SIWE message
+const siweResponse = await fetch('https://api.rise.works/v2/auth/siwe?wallet=${wallet}&riseid=${riseId}');
+const { siwe } = siweResponse.data.data;
+
+// Sign and verify
+const signature = await signer.signMessage(siwe);
+const nonce = extractNonce(siwe);
+const verifyResponse = await fetch('https://api.rise.works/v2/auth/verify', {
+  method: 'POST',
+  body: JSON.stringify({ message: siwe, sig: signature, nonce })
+});
+const { jwt } = verifyResponse.data.data;
+
+// Use in requests
+const response = await fetch('/v2/teams', {
+  headers: { 'Authorization': `Bearer ${jwt}` }
+});
+```
+
+## Endpoint Comparison Table
+
+### Authentication Endpoints
+
+| Type | V1 Endpoint | B2B Endpoint |
+|------|-------------|--------------|
+| Existing | `GET /v1/api/siwe` | `GET /v2/auth/siwe` |
+| Existing | `POST /v1/api/siwe` | `POST /v2/auth/verify` |
+
+### Team Management
+
+| Type | V1 Endpoint | B2B Endpoint |
+|------|-------------|--------------|
+| Existing | `GET /v1/teams` | `GET /v2/user/teams` |
+| Existing | `GET /v1/teams/{teamId}/talent` | `GET /v2/teams/{team_nanoid}/users` |
+| Existing | `GET /v1/teams/{teamId}/talent/{talentId}` | `GET /v2/teams/{team_nanoid}/member/{user_nanoid}/summary` |
+| Existing | `DELETE /v1/teams/{teamId}/talent/{talentId}` | `DELETE /v2/teams/{team_nanoid}/member/{user_nanoid}` |
+| New | - | `GET /v2/teams/{team_nanoid}/settings` |
+| New | - | `PUT /v2/teams/{team_nanoid}/settings` |
+| New | - | `GET /v2/teams/{team_nanoid}` |
+| New | - | `DELETE /v2/teams/{team_nanoid}` |
+| New | - | `PUT /v2/teams/{team_nanoid}` |
+| New | - | `POST /v2/teams` |
+| New | - | `GET /v2/teams/{team_nanoid}/member/{user_nanoid}/settings` |
+| New | - | `PUT /v2/teams/{team_nanoid}/member/{user_nanoid}/settings` |
+
+### Payment Processing
+
+| Type | V1 Endpoint | B2B Endpoint |
+|------|-------------|--------------|
+| Existing | `POST /v1/payments/pay` | `POST /v2/payments` + `PUT /v2/payments` |
+| Existing | `PUT /v1/payments/pay` | `POST /v2/payments` + `PUT /v2/payments` |
+| Existing | `POST /v1/payments/batch-pay` | `POST /v2/payments` + `PUT /v2/payments` |
+| Existing | `PUT /v1/payments/batch-pay` | `POST /v2/payments` + `PUT /v2/payments` |
+| Existing | `POST /v1/payments/batch-pay/intents` | `POST /v2/payments` + `PUT /v2/payments` |
+| Existing | `GET /v1/payments/` | `GET /v2/payments` |
+
+### Balance Management
+
+| Type | V1 Endpoint | B2B Endpoint |
+|------|-------------|--------------|
+| Existing | `GET /v1/riseid/{rise_id}/balance` | `GET /v2/balance?nanoid={nanoid}` |
+
+### Invites Management
+
+| Type | V1 Endpoint | B2B Endpoint |
+|------|-------------|--------------|
+| Existing | `GET /v1/invites/` | `GET /v2/invites` |
+| Existing | `POST /v1/invites/` | `POST /v2/invites` |
+| Existing | `POST /v1/invites/manager` | `POST /v2/invites/manager` |
+| Existing | `POST /v1/invites/warmed` | `POST /v2/invites` |
+
+## Response Format Comparison
+
+### V1 Response Format
+```json
+{
+  "teams": [
+    {
+      "id": 123,
+      "name": "Engineering Team",
+      "created_at": "2024-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+### B2B Response Format
+```json
+{
+  "success": true,
+  "data": {
+    "teams": [
+      {
+        "nanoid": "te-abc123def456",
+        "name": "Engineering Team",
+        "created_at": "2024-01-01T00:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+## Error Format Comparison
+
+### V1 Error Format
+```json
+{
+  "error": "Team not found",
+  "error_code": "TEAM_NOT_FOUND"
+}
+```
+
+### B2B Error Format
+```json
+{
+  "success": false,
+  "data": "Team te-abc123def456 not found"
+}
+```
+
+## ID System Comparison
+
+### V1 ID System
+- **Teams**: Numeric IDs (`123`, `456`, `789`)
+- **Users**: Numeric IDs (`talentId`)
+- **RiseID**: String format (`rise_id`)
+
+### B2B ID System
+- **Teams**: Nanoids (`te-abc123def456`)
+- **Users**: Nanoids (`us-ghi789jkl012`)
+- **Companies**: Nanoids (`co-def456ghi789`)
+- **Payments**: Nanoids (`pa-pay123def456`)
+
+## New B2B Features
+
+### Enhanced Team Management
+- **Team Settings**: Configure payment delays and other settings
+- **Member Management**: Detailed member information and settings
+- **Team Operations**: Create, update, and delete teams
+- **Enhanced Permissions**: More granular access control
+
+### Company Management
+- **Company CRUD**: Full company management operations
+- **Member Settings**: Company-level member configurations
+- **Contact Management**: Company contact information
+- **Ownership Details**: Company ownership information
+
+### User Management
+- **Organization Access**: Get user's organizations
+- **Profile Management**: Update user address and avatar
+- **Enhanced Data**: More detailed user information
+
+### Payment Enhancements
+- **Unified Endpoint**: Single endpoint for all payment types
+- **EIP-712 Signing**: Enhanced security with typed data signing
+- **Batch Processing**: Improved batch payment handling
+- **Intent Management**: Better payment intent handling
+
+## Migration Impact Assessment
+
+### Low Impact Changes
+- **Authentication**: Minor path updates, same SIWE flow
+- **Invites**: Path updates, same functionality
+- **Basic Operations**: Same core functionality
+
+### Medium Impact Changes
+- **Response Format**: Need to handle `{ success, data }` wrapper
+- **Error Handling**: Updated error format
+- **ID System**: Replace numeric IDs with nanoids
+
+### High Impact Changes
+- **Payment Processing**: Two-step process with EIP-712 signing
+- **Team Management**: New endpoints and enhanced features
+- **Balance Management**: New endpoint structure
+
+## Support Resources
+
+<CardGroup cols={2}>
+  <Card title="Migration Guide" icon="book" href="/guides/migrating-from-v1">
+    Complete migration guide
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Interactive API docs
+  </Card>
+  <Card title="Support Email" icon="mail" href="mailto:Hello@Riseworks.io">
+    Get migration help
+  </Card>
+  <Card title="Status Page" icon="activity" href="https://status.rise.works">
+    Check API status
+  </Card>
+</CardGroup>
+
+<Note>
+  **Need Help?** Our support team is available to help with your migration. Contact us at Hello@Riseworks.io for personalized assistance.
+</Note>
+
+<Warning>
+  **Important**: The V1 API will be deprecated in the future. We recommend completing your migration as soon as possible to ensure continued access to Rise services.
+</Warning> 
