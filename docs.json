@@ -51,35 +51,8 @@
       },
       {
         "tab": "API Reference",
-        "groups": [
-          {
-            "group": "Reference",
-            "pages": [
-              "api-reference/introduction",
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Essentials",
-        "groups": [
-          {
-            "group": "Essentials",
-            "pages": [
-              "essentials/code",
-              "essentials/images",
-              "essentials/markdown",
-              "essentials/navigation",
-              "essentials/reusable-snippets",
-              "essentials/settings"
-            ]
-          }
-        ]
-      }
+        "openapi": "api-reference/openapi.yaml"
+      }      
     ],
     "global": {
       "anchors": [
