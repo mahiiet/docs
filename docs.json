@@ -53,21 +53,7 @@
         "tab": "API Reference",
         "openapi": "api-reference/openapi.yaml"
       }      
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Dashboard",
-          "href": "https://app.rise.works",
-          "icon": "dashboard"
-        },
-        {
-          "anchor": "Support",
-          "href": "mailto:Hello@Riseworks.io",
-          "icon": "message-circle"
-        }
-      ]
-    }
+    ]
   },
   "logo": {
     "light": "https://cdn.prod.website-files.com/624f0c4263953ffe82f4e446/68092904f1a7fae9edc78b9b_RiseLogo.webp",
