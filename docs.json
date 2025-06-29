@@ -21,7 +21,6 @@
               "quickstart",
               "authentication",
               "guides/migrating-from-v1",
-              "guides/v1-vs-b2b-comparison",
               "web3-integration"
             ]
           },
@@ -33,7 +32,6 @@
               "concepts/entity-balance",
               "concepts/teams",
               "concepts/roles",
-              "concepts/permissions",
               "concepts/payments"
             ]
           },
@@ -52,7 +50,7 @@
       {
         "tab": "API Reference",
         "openapi": "api-reference/openapi.yaml"
-      }      
+      }
     ]
   },
   "logo": {

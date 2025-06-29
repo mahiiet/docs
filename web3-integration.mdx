@@ -3,8 +3,6 @@ title: 'Web3 Integration'
 description: 'Integrate wallets and typed data signing with Rise B2B API'
 ---
 
-# Web3 Integration
-
 Rise B2B API is designed for seamless integration with Web3 wallets and smart contract standards. This guide covers wallet integration and EIP-712 typed data signing for secure blockchain operations.
 
 <CardGroup cols={2}>
@@ -207,103 +205,6 @@ signTypedData()
   .catch((error) => console.error('Error:', error));
 ```
 
-### Browser-Based Typed Data Signing
-
-For browser applications, use wallet providers like MetaMask:
-
-<CodeGroup>
-
-```javascript
-// Browser-based signing with MetaMask
-const signTypedDataInBrowser = async (typedData) => {
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
-  
-  const signature = await signer.signTypedData(
-    typedData.domain,
-    typedData.types,
-    typedData.typed_data
-  );
-  
-  return signature;
-};
-```
-
-```typescript
-import { ethers } from 'ethers';
-
-interface TypedData {
-  domain: {
-    name: string;
-    version: string;
-    chainId: number;
-    verifyingContract: string;
-  };
-  types: Record<string, Array<{ name: string; type: string }>>;
-  typed_data: Record<string, any>;
-  primary_type: string;
-}
-
-const signTypedDataInBrowser = async (typedData: TypedData): Promise<string> => {
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
-  
-  const signature = await signer.signTypedData(
-    typedData.domain,
-    typedData.types,
-    typedData.typed_data
-  );
-  
-  return signature;
-};
-```
-
-</CodeGroup>
-
-### React Hook for Typed Data Signing
-
-```typescript
-import { useState } from 'react';
-import { ethers } from 'ethers';
-
-interface UseTypedDataSigning {
-  signing: boolean;
-  error: string | null;
-  signTypedData: (typedData: any) => Promise<string | null>;
-}
-
-export function useTypedDataSigning(): UseTypedDataSigning {
-  const [signing, setSigning] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const signTypedData = async (typedData: any): Promise<string | null> => {
-    setSigning(true);
-    setError(null);
-    
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      
-      const signature = await signer.signTypedData(
-        typedData.domain,
-        typedData.types,
-        typedData.typed_data
-      );
-      
-      return signature;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Signing failed';
-      setError(errorMessage);
-      return null;
-    } finally {
-      setSigning(false);
-    }
-  };
-
-  return { signing, error, signTypedData };
-}
-```
-
 ## When to Use Typed Data Signing
 
 Typed data signing is required for the following Rise operations:
@@ -341,7 +242,7 @@ class RiseWeb3Integration {
   constructor(baseUrl = 'https://api.rise.works', jwtToken) {
     this.baseUrl = baseUrl;
     this.headers = {
-      'Authorization': `Bearer ${jwtToken}`,
+      'X-Auth-Token': `${jwtToken}`,
       'Content-Type': 'application/json'
     };
   }
@@ -475,14 +376,14 @@ Common errors when working with typed data signing:
 ```javascript
 // Development (Arbitrum Sepolia)
 const DEV_CONFIG = {
-  baseUrl: 'https://dev-pay-api.riseworks.dev',
+  baseUrl: 'https://api.rise.works',
   chainId: 421614,
   verifyingContract: '0x...' // Sepolia contract address
 };
 
 // Production (Arbitrum mainnet)
 const PROD_CONFIG = {
-  baseUrl: 'https://pay-api.riseworks.io',
+  baseUrl: 'https://api.rise.works',
   chainId: 42161,
   verifyingContract: '0x...' // Mainnet contract address
 };
@@ -496,13 +397,13 @@ interface Web3Config {
 }
 
 const DEV_CONFIG: Web3Config = {
-  baseUrl: 'https://dev-pay-api.riseworks.dev',
+  baseUrl: 'https://api.rise.works',
   chainId: 421614,
   verifyingContract: '0x...'
 };
 
 const PROD_CONFIG: Web3Config = {
-  baseUrl: 'https://pay-api.riseworks.io',
+  baseUrl: 'https://api.rise.works',
   chainId: 42161,
   verifyingContract: '0x...'
 };

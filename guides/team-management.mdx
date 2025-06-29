@@ -5,27 +5,274 @@ description: 'Manage teams and users with Rise B2B API'
 
 # Team Management Guide
 
-Learn how to create, update, and manage teams and users.
+Learn how to create, update, and manage teams and users with the Rise B2B API.
 
-## Create a Team
+## Team Management Flow
+
+<Steps>
+  <Step title="Create Team">
+    Create a new team with name and admin wallet
+  </Step>
+  <Step title="Add Members">
+    Invite users with specific roles and permissions
+  </Step>
+  <Step title="Manage Roles">
+    Update member roles and permissions
+  </Step>
+  <Step title="Remove Members">
+    Remove users from teams when needed
+  </Step>
+</Steps>
+
+## API Examples
+
+### Create a Team
+
+<RequestExample>
 ```bash
-curl -X POST "https://api.rise.works/v2/teams" -d '{ "name": "Engineering", "company_nanoid": "company_123" }'
+curl -X POST "https://api.rise.works/v2/teams" \
+  -H "X-Auth-Token: YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Engineering Team",
+    "description": "Core engineering team for product development",
+    "entity_nanoid": "entity_123",
+    "admin_wallet": "0x1234567890abcdef..."
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "data": {
+    "team_nanoid": "te-abc123def456",
+    "name": "Engineering Team",
+    "description": "Core engineering team for product development",
+    "entity_nanoid": "entity_123",
+    "admin_wallet": "0x1234567890abcdef...",
+    "created_at": "2024-01-01T12:00:00Z",
+    "member_count": 1,
+    "status": "active"
+  }
+}
+```
+</ResponseExample>
+
+### Add a User to a Team
+
+<RequestExample>
+```bash
+curl -X POST "https://api.rise.works/v2/teams/te-abc123def456/members" \
+  -H "X-Auth-Token: YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_nanoid": "us-ghi789jkl012",
+    "role": "team_employee",
+    "permissions": ["pay", "view"]
+  }'
+```
+</RequestExample>
+
+### Update Team Settings
+
+<RequestExample>
+```bash
+curl -X PUT "https://api.rise.works/v2/teams/te-abc123def456/settings" \
+  -H "X-Auth-Token: YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Updated Engineering Team",
+    "description": "Updated team description"
+  }'
+```
+</RequestExample>
+
+### Remove a User
+
+<RequestExample>
+```bash
+curl -X DELETE "https://api.rise.works/v2/teams/te-abc123def456/members/us-ghi789jkl012" \
+  -H "X-Auth-Token: YOUR_JWT_TOKEN"
+```
+</RequestExample>
+
+## Complete Integration Example
+
+```javascript
+const { ethers } = require('ethers');
+require('dotenv').config();
+
+class RiseTeamManagement {
+  constructor(baseUrl = 'https://api.rise.works', jwtToken) {
+    this.baseUrl = baseUrl;
+    this.headers = {
+      'X-Auth-Token': `${jwtToken}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async createTeam(name, description, entityNanoid, adminWallet) {
+    const teamData = {
+      name,
+      description,
+      entity_nanoid: entityNanoid,
+      admin_wallet: adminWallet
+    };
+
+    const response = await fetch(`${this.baseUrl}/v2/teams`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(teamData)
+    });
+
+    return response.json();
+  }
+
+  async getTeam(teamNanoid) {
+    const response = await fetch(
+      `${this.baseUrl}/v2/teams/${teamNanoid}`,
+      { headers: this.headers }
+    );
+    return response.json();
+  }
+
+  async addMember(teamNanoid, userNanoid, role, permissions) {
+    const memberData = {
+      user_nanoid: userNanoid,
+      role,
+      permissions
+    };
+
+    const response = await fetch(`${this.baseUrl}/v2/teams/${teamNanoid}/members`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(memberData)
+    });
+
+    return response.json();
+  }
+
+  async updateMemberRole(teamNanoid, userNanoid, newRole, newPermissions) {
+    const updateData = {
+      role: newRole,
+      permissions: newPermissions
+    };
+
+    const response = await fetch(`${this.baseUrl}/v2/teams/${teamNanoid}/members/${userNanoid}`, {
+      method: 'PUT',
+      headers: this.headers,
+      body: JSON.stringify(updateData)
+    });
+
+    return response.json();
+  }
+
+  async removeMember(teamNanoid, userNanoid) {
+    const response = await fetch(`${this.baseUrl}/v2/teams/${teamNanoid}/members/${userNanoid}`, {
+      method: 'DELETE',
+      headers: this.headers
+    });
+
+    return response.json();
+  }
+
+  async updateTeamSettings(teamNanoid, settings) {
+    const response = await fetch(`${this.baseUrl}/v2/teams/${teamNanoid}/settings`, {
+      method: 'PUT',
+      headers: this.headers,
+      body: JSON.stringify(settings)
+    });
+
+    return response.json();
+  }
+}
+
+// Usage example
+async function main() {
+  const teamManagement = new RiseTeamManagement(
+    'https://api.rise.works',
+    process.env.JWT_TOKEN
+  );
+
+  try {
+    // Create a new team
+    const newTeam = await teamManagement.createTeam(
+      'Engineering Team',
+      'Core engineering team for product development',
+      'entity_123',
+      process.env.ADMIN_WALLET
+    );
+    
+    console.log('Team created:', newTeam.data.team_nanoid);
+
+    // Add a member to the team
+    const memberAdded = await teamManagement.addMember(
+      newTeam.data.team_nanoid,
+      'us-ghi789jkl012',
+      'team_employee',
+      ['pay', 'view']
+    );
+    
+    console.log('Member added successfully');
+
+    // Update team settings
+    const updatedTeam = await teamManagement.updateTeamSettings(
+      newTeam.data.team_nanoid,
+      {
+        name: 'Updated Engineering Team',
+        description: 'Updated team description'
+      }
+    );
+    
+    console.log('Team settings updated');
+
+  } catch (error) {
+    console.error('Team management error:', error);
+  }
+}
+
+// Run the example
+if (require.main === module) {
+  main();
+}
 ```
 
-## Add a User to a Team
-```bash
-curl -X POST "https://api.rise.works/v2/teams/{team_nanoid}/users" -d '{ "user_nanoid": "user_123" }'
-```
+## Team Roles and Permissions
 
-## Update Team Settings
-```bash
-curl -X PUT "https://api.rise.works/v2/teams/{team_nanoid}/settings" ...
-```
+| Role | Permissions | Description |
+|------|-------------|-------------|
+| **Team Admin** | `pay`, `view`, `manage`, `invite` | Full control over team settings and members |
+| **Finance Admin** | `pay`, `view`, `finance` | Financial management capabilities |
+| **Team Employee** | `pay`, `view` | Standard team member with payment capabilities |
+| **Team Viewer** | `view` | Read-only access to team information |
 
-## Remove a User
-```bash
-curl -X DELETE "https://api.rise.works/v2/teams/{team_nanoid}/users/{user_nanoid}"
-```
+## Error Handling
 
-## Permissions
-See [Permissions](/concepts/permissions) for details. 
+Common team management errors and solutions:
+
+| Error | Description | Solution |
+|-------|-------------|----------|
+| `INVALID_TEAM_NAME` | Team name is invalid or too long | Use a valid team name (2-50 characters) |
+| `INVALID_ADMIN_WALLET` | Admin wallet address is invalid | Ensure wallet address is valid Ethereum address |
+| `INSUFFICIENT_PERMISSIONS` | User lacks permission for action | Check user's role and permissions |
+| `TEAM_NOT_FOUND` | Team does not exist | Verify team_nanoid is correct |
+| `MEMBER_ALREADY_EXISTS` | User is already a team member | Check existing team membership |
+| `CANNOT_REMOVE_ADMIN` | Cannot remove the last admin | Ensure at least one admin remains |
+
+## Best Practices
+
+<Warning>
+  **Always maintain at least one team admin** to prevent losing access to team management capabilities.
+</Warning>
+
+- **Role Hierarchy**: Use the principle of least privilege when assigning roles
+- **Regular Audits**: Periodically review team members and their permissions
+- **Documentation**: Keep records of team structure and permission changes
+- **Backup Admins**: Always have multiple admins for critical teams
+- **Permission Reviews**: Regularly review and update member permissions
+
+<Note>
+  **Need help?** See the [Teams](/concepts/teams) page for detailed team management concepts or contact support at Hello@Riseworks.io
+</Note> 

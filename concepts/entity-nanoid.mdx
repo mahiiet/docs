@@ -242,64 +242,6 @@ class NanoidValidator {
 
 </CodeGroup>
 
-## React Hook for Nanoid Management
-
-```typescript
-import { useState, useCallback } from 'react';
-
-interface UseNanoid {
-  validateNanoid: (nanoid: string) => boolean;
-  getEntityType: (nanoid: string) => string;
-  parseNanoid: (nanoid: string) => NanoidInfo;
-}
-
-export function useNanoid(): UseNanoid {
-  const validateNanoid = useCallback((nanoid: string): boolean => {
-    if (!nanoid || typeof nanoid !== 'string') {
-      return false;
-    }
-    
-    if (nanoid.length !== 15) {
-      return false;
-    }
-    
-    const validPrefixes = ['te-', 'co-', 'us-', 'pa-', 'pg-', 'in-'];
-    return validPrefixes.some(prefix => nanoid.startsWith(prefix));
-  }, []);
-
-  const getEntityType = useCallback((nanoid: string): string => {
-    if (nanoid.startsWith('te-')) return 'team';
-    if (nanoid.startsWith('co-')) return 'company';
-    if (nanoid.startsWith('us-')) return 'user';
-    if (nanoid.startsWith('pa-')) return 'payment';
-    if (nanoid.startsWith('pg-')) return 'payment_group';
-    if (nanoid.startsWith('in-')) return 'invite';
-    
-    return 'unknown';
-  }, []);
-
-  const parseNanoid = useCallback((nanoid: string): NanoidInfo => {
-    const isValid = validateNanoid(nanoid);
-    const prefix = nanoid.substring(0, 3);
-    const randomPart = nanoid.substring(3);
-    const entityType = getEntityType(nanoid);
-
-    return {
-      entityType,
-      prefix,
-      randomPart,
-      isValid
-    };
-  }, [validateNanoid, getEntityType]);
-
-  return {
-    validateNanoid,
-    getEntityType,
-    parseNanoid
-  };
-}
-```
-
 ## Error Handling
 
 Common errors when working with nanoids:

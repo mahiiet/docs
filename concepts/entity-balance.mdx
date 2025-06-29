@@ -16,7 +16,7 @@ Retrieve the current balance for a specific entity:
 <RequestExample>
 ```bash
 curl -X GET "https://api.rise.works/v2/balance?nanoid=te-abc123def456" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+  -H "X-Auth-Token: YOUR_JWT_TOKEN"
 ```
 </RequestExample>
 
@@ -48,7 +48,7 @@ You can specify which currencies to query:
 <RequestExample>
 ```bash
 curl -X GET "https://api.rise.works/v2/balance?nanoid=te-abc123def456&currencies=USD,EUR" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+  -H "X-Auth-Token: YOUR_JWT_TOKEN"
 ```
 </RequestExample>
 
@@ -96,7 +96,7 @@ class RiseEntityBalance {
   constructor(baseUrl = 'https://api.rise.works', jwtToken) {
     this.baseUrl = baseUrl;
     this.headers = {
-      'Authorization': `Bearer ${jwtToken}`,
+      'X-Auth-Token': `${jwtToken}`,
       'Content-Type': 'application/json'
     };
   }

@@ -41,7 +41,7 @@ First, create a payment draft with the recipient details:
 <RequestExample>
 ```bash
 curl -X POST "https://api.rise.works/v2/payments" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "X-Auth-Token: YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "from": "team_nanoid_123",
@@ -115,14 +115,13 @@ Sign the typed data using EIP-712 standard:
 <CodeGroup>
 
 ```javascript
-import { ethers } from 'ethers';
+const { ethers } = require('ethers');
 
-async function signPayment(typedData, walletAddress) {
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
+async function signPayment(typedData, privateKey) {
+  const wallet = new ethers.Wallet(privateKey);
   
   // Sign the typed data
-  const signature = await signer.signTypedData(
+  const signature = await wallet.signTypedData(
     typedData.domain,
     { [typedData.primaryType]: typedData.message },
     typedData.message
@@ -132,78 +131,7 @@ async function signPayment(typedData, walletAddress) {
 }
 
 // Usage
-const signature = await signPayment(response.data.typed_data, walletAddress);
-```
-
-```typescript
-import { ethers } from 'ethers';
-
-interface TypedData {
-  types: Record<string, Array<{ name: string; type: string }>>;
-  primaryType: string;
-  domain: {
-    name: string;
-    version: string;
-    chainId: number;
-    verifyingContract: string;
-  };
-  message: Record<string, any>;
-}
-
-async function signPayment(typedData: TypedData, walletAddress: string): Promise<string> {
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
-  
-  // Sign the typed data
-  const signature = await signer.signTypedData(
-    typedData.domain,
-    { [typedData.primaryType]: typedData.message },
-    typedData.message
-  );
-  
-  return signature;
-}
-```
-
-```react
-import { ethers } from 'ethers';
-import { useState } from 'react';
-
-function PaymentSigner({ typedData, onSigned }) {
-  const [signing, setSigning] = useState(false);
-  const [error, setError] = useState(null);
-
-  const signPayment = async () => {
-    setSigning(true);
-    setError(null);
-    
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      
-      const signature = await signer.signTypedData(
-        typedData.domain,
-        { [typedData.primaryType]: typedData.message },
-        typedData.message
-      );
-      
-      onSigned(signature);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSigning(false);
-    }
-  };
-
-  return (
-    <div>
-      <button onClick={signPayment} disabled={signing}>
-        {signing ? 'Signing...' : 'Sign Payment'}
-      </button>
-      {error && <p className="error">Error: {error}</p>}
-    </div>
-  );
-}
+const signature = await signPayment(response.data.typed_data, process.env.WALLET_PRIVATE_KEY);
 ```
 
 ```python
@@ -228,7 +156,7 @@ Submit the signed payment to execute the transaction:
 <RequestExample>
 ```bash
 curl -X PUT "https://api.rise.works/v2/payments" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "X-Auth-Token: YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "signer": "0x1234567890abcdef...",
@@ -326,13 +254,14 @@ Here's a complete example of the payment integration:
 <CodeGroup>
 
 ```javascript
-import { ethers } from 'ethers';
+const { ethers } = require('ethers');
+require('dotenv').config();
 
 class RisePayments {
   constructor(baseUrl = 'https://api.rise.works', jwtToken) {
     this.baseUrl = baseUrl;
     this.headers = {
-      'Authorization': `Bearer ${jwtToken}`,
+      'X-Auth-Token': `${jwtToken}`,
       'Content-Type': 'application/json'
     };
   }
@@ -354,11 +283,10 @@ class RisePayments {
     return response.json();
   }
 
-  async signPayment(typedData, walletAddress) {
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
+  async signPayment(typedData, privateKey) {
+    const wallet = new ethers.Wallet(privateKey);
     
-    const signature = await signer.signTypedData(
+    const signature = await wallet.signTypedData(
       typedData.domain,
       { [typedData.primaryType]: typedData.message },
       typedData.message
@@ -386,7 +314,7 @@ class RisePayments {
     return response.json();
   }
 
-  async processBatchPayment(from, recipients, walletAddress) {
+  async processBatchPayment(from, recipients, privateKey) {
     try {
       // Step 1: Create payment draft
       const draft = await this.createBatchPayment(from, recipients);
@@ -398,12 +326,12 @@ class RisePayments {
       // Step 2: Sign the payment
       const signature = await this.signPayment(
         draft.data.typed_data, 
-        walletAddress
+        privateKey
       );
 
       // Step 3: Execute the payment
       const result = await this.executePayment(
-        walletAddress,
+        draft.data.typed_data.message.from,
         from,
         recipients,
         draft.data.typed_data,
@@ -416,167 +344,165 @@ class RisePayments {
       throw error;
     }
   }
+}
+
+// Usage example
+async function main() {
+  const risePayments = new RisePayments(
+    'https://api.rise.works',
+    process.env.JWT_TOKEN
+  );
+
+  const recipients = [
+    {
+      to: 'user_nanoid_456',
+      amount: '100.00',
+      currency: 'USD',
+      description: 'Salary payment'
+    },
+    {
+      to: 'user_nanoid_789',
+      amount: '150.00',
+      currency: 'USD', 
+      description: 'Bonus payment'
+    }
+  ];
+
+  try {
+    const result = await risePayments.processBatchPayment(
+      'team_nanoid_123',
+      recipients,
+      process.env.WALLET_PRIVATE_KEY
+    );
+    
+    console.log('Payment successful:', result);
+  } catch (error) {
+    console.error('Payment failed:', error);
+  }
+}
+
+// Run the example
+if (require.main === module) {
+  main();
 }
 ```
 
-```typescript
-import { ethers } from 'ethers';
+```python
+import requests
+import json
+from eth_account import Account
+from eth_account.messages import encode_structured_data
+from typing import List, Dict, Any
 
-interface Recipient {
-  to: string;
-  amount: string;
-  currency: string;
-  description: string;
-}
-
-interface TypedData {
-  types: Record<string, Array<{ name: string; type: string }>>;
-  primaryType: string;
-  domain: {
-    name: string;
-    version: string;
-    chainId: number;
-    verifyingContract: string;
-  };
-  message: Record<string, any>;
-}
-
-interface PaymentResponse {
-  success: boolean;
-  data: {
-    typed_data: TypedData;
-    payment_group_id: string;
-    total_amount: string;
-  };
-}
-
-interface ExecutionResponse {
-  success: boolean;
-  data: {
-    transaction: {
-      hash: string;
-      status: string;
-      block_number: number | null;
-      gas_used: string | null;
-      gas_price: string | null;
-    };
-    payments: Array<{
-      id: string;
-      recipient: string;
-      amount: string;
-      currency: string;
-      status: string;
-      transaction_hash: string;
-    }>;
-  };
-}
-
-class RisePayments {
-  private baseUrl: string;
-  private headers: Record<string, string>;
-
-  constructor(baseUrl: string = 'https://api.rise.works', jwtToken: string) {
-    this.baseUrl = baseUrl;
-    this.headers = {
-      'Authorization': `Bearer ${jwtToken}`,
-      'Content-Type': 'application/json'
-    };
-  }
-
-  async createBatchPayment(
-    from: string, 
-    recipients: Recipient[], 
-    payNow: boolean = false
-  ): Promise<PaymentResponse> {
-    const paymentData = {
-      from,
-      to: recipients,
-      pay_now: payNow,
-      network: 'arbitrum'
-    };
-
-    const response = await fetch(`${this.baseUrl}/v2/payments`, {
-      method: 'POST',
-      headers: this.headers,
-      body: JSON.stringify(paymentData)
-    });
-
-    return response.json();
-  }
-
-  async signPayment(typedData: TypedData, walletAddress: string): Promise<string> {
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
+class RisePayments:
+    def __init__(self, base_url: str = "https://api.rise.works", jwt_token: str = None):
+        self.base_url = base_url
+        self.headers = {
+            "X-Auth-Token": f"{jwt_token}",
+            "Content-Type": "application/json"
+        }
     
-    const signature = await signer.signTypedData(
-      typedData.domain,
-      { [typedData.primaryType]: typedData.message },
-      typedData.message
-    );
+    def create_batch_payment(self, from_team: str, recipients: List[Dict], pay_now: bool = False) -> Dict:
+        """Create a batch payment draft"""
+        payment_data = {
+            "from": from_team,
+            "to": recipients,
+            "pay_now": pay_now,
+            "network": "arbitrum"
+        }
+        
+        response = requests.post(
+            f"{self.base_url}/v2/payments",
+            headers=self.headers,
+            json=payment_data
+        )
+        return response.json()
     
-    return signature;
-  }
+    def sign_payment(self, typed_data: Dict, private_key: str) -> str:
+        """Sign the payment typed data"""
+        message = encode_structured_data(typed_data)
+        signed_message = Account.sign_message(message, private_key)
+        return signed_message.signature.hex()
+    
+    def execute_payment(self, signer: str, from_team: str, recipients: List[Dict], 
+                       typed_data: Dict, signature: str) -> Dict:
+        """Execute the signed payment"""
+        payment_data = {
+            "signer": signer,
+            "from": from_team,
+            "to": recipients,
+            "pay_now": False,
+            "typed_data": typed_data,
+            "signature": signature
+        }
+        
+        response = requests.put(
+            f"{self.base_url}/v2/payments",
+            headers=self.headers,
+            json=payment_data
+        )
+        return response.json()
+    
+    def process_batch_payment(self, from_team: str, recipients: List[Dict], 
+                            private_key: str) -> Dict:
+        """Complete batch payment flow"""
+        try:
+            # Step 1: Create payment draft
+            draft = self.create_batch_payment(from_team, recipients)
+            
+            if not draft.get('success'):
+                raise Exception(f"Failed to create payment: {draft.get('data')}")
+            
+            # Step 2: Sign the payment
+            signature = self.sign_payment(draft['data']['typed_data'], private_key)
+            
+            # Step 3: Execute the payment
+            result = self.execute_payment(
+                draft['data']['typed_data']['message']['from'],
+                from_team,
+                recipients,
+                draft['data']['typed_data'],
+                signature
+            )
+            
+            return result
+        except Exception as error:
+            print(f"Payment processing failed: {error}")
+            raise error
 
-  async executePayment(
-    signer: string,
-    from: string,
-    recipients: Recipient[],
-    typedData: TypedData,
-    signature: string
-  ): Promise<ExecutionResponse> {
-    const paymentData = {
-      signer,
-      from,
-      to: recipients,
-      pay_now: false,
-      typed_data: typedData,
-      signature
-    };
-
-    const response = await fetch(`${this.baseUrl}/v2/payments`, {
-      method: 'PUT',
-      headers: this.headers,
-      body: JSON.stringify(paymentData)
-    });
-
-    return response.json();
-  }
-
-  async processBatchPayment(
-    from: string, 
-    recipients: Recipient[], 
-    walletAddress: string
-  ): Promise<ExecutionResponse> {
-    try {
-      // Step 1: Create payment draft
-      const draft = await this.createBatchPayment(from, recipients);
-      
-      if (!draft.success) {
-        throw new Error(`Failed to create payment: ${draft.data}`);
-      }
-
-      // Step 2: Sign the payment
-      const signature = await this.signPayment(
-        draft.data.typed_data, 
-        walletAddress
-      );
-
-      // Step 3: Execute the payment
-      const result = await this.executePayment(
-        walletAddress,
-        from,
-        recipients,
-        draft.data.typed_data,
-        signature
-      );
-
-      return result;
-    } catch (error) {
-      console.error('Payment processing failed:', error);
-      throw error;
-    }
-  }
-}
+# Usage example
+if __name__ == "__main__":
+    import os
+    
+    rise_payments = RisePayments(
+        "https://api.rise.works",
+        os.getenv("JWT_TOKEN")
+    )
+    
+    recipients = [
+        {
+            "to": "user_nanoid_456",
+            "amount": "100.00",
+            "currency": "USD",
+            "description": "Salary payment"
+        },
+        {
+            "to": "user_nanoid_789",
+            "amount": "150.00",
+            "currency": "USD",
+            "description": "Bonus payment"
+        }
+    ]
+    
+    try:
+        result = rise_payments.process_batch_payment(
+            "team_nanoid_123",
+            recipients,
+            os.getenv("WALLET_PRIVATE_KEY")
+        )
+        print("Payment successful:", result)
+    except Exception as error:
+        print("Payment failed:", error)
 ```
 
 </CodeGroup>
@@ -652,7 +578,7 @@ Retrieve payment history with filtering options:
 <RequestExample>
 ```bash
 curl -X GET "https://api.rise.works/v2/payments?team_nanoid=team_123&state=completed&start_date=2024-01-01&end_date=2024-01-31&query_type=payable" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+  -H "X-Auth-Token: YOUR_JWT_TOKEN"
 ```
 </RequestExample>
 
@@ -690,7 +616,7 @@ class PaymentTracker {
   constructor(baseUrl = 'https://api.rise.works', jwtToken) {
     this.baseUrl = baseUrl;
     this.headers = {
-      'Authorization': `Bearer ${jwtToken}`,
+      'X-Auth-Token': `${jwtToken}`,
       'Content-Type': 'application/json'
     };
   }
@@ -750,7 +676,7 @@ class PaymentTracker {
   constructor(baseUrl: string = 'https://api.rise.works', jwtToken: string) {
     this.baseUrl = baseUrl;
     this.headers = {
-      'Authorization': `Bearer ${jwtToken}`,
+      'X-Auth-Token': `${jwtToken}`,
       'Content-Type': 'application/json'
     };
   }
@@ -815,6 +741,10 @@ Common payment errors and solutions:
 - **Amount Validation**: Validate payment amounts before submission
 - **Recipient Verification**: Ensure recipients have valid Rise accounts
 - **Gas Estimation**: Estimate gas costs before executing payments
+
+<Note>
+  **Need help?** See the [Payments](/concepts/payments) page for detailed payment concepts or contact support at Hello@Riseworks.io
+</Note>
 
 ## Testing Payments
 

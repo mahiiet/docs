@@ -4898,12 +4898,677 @@ paths:
                   - data
                 additionalProperties: false
                 description: Internal Server Error
+  /v2/user/organizations:
+    get:
+      summary: Get user organization's
+      tags:
+        - User Management
+      description: Retrieves a list of organizations associated with the logged-in user.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      companies:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            nanoid:
+                              type: string
+                              minLength: 15
+                              maxLength: 15
+                              pattern: ^co\-
+                              description: Unique identifier for the company.
+                            avatar:
+                              type: string
+                              description: URL of the company's avatar image.
+                            name:
+                              type: string
+                              description: Name of the company.
+                          required:
+                            - nanoid
+                            - avatar
+                            - name
+                          additionalProperties: false
+                    required:
+                      - companies
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+  /v2/user/teams:
+    get:
+      summary: Get user team's
+      tags:
+        - Team Management
+      description: Retrieves a list of teams associated with the logged-in user.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: object
+                    properties:
+                      teams:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            nanoid:
+                              type: string
+                              description: Unique identifier for the team.
+                            name:
+                              type: string
+                              minLength: 1
+                              description: Name of the team.
+                            riseid:
+                              type: string
+                              minLength: 42
+                              maxLength: 42
+                              description: Unique identifier for the team in Rise.
+                            rise_account:
+                              type: string
+                              pattern: ^0x[a-fA-F0-9]{40}$
+                              description: Unique identifier for the team's Rise account.
+                            role:
+                              type: string
+                              description: Role of the user in the team.
+                            avatar:
+                              type: string
+                              description: URL of the team's avatar image.
+                            balance:
+                              type: string
+                              description: Balance associated with the team.
+                            payees_count:
+                              type: number
+                              description: Number of payees in the team.
+                            administrators_count:
+                              type: number
+                              description: Number of administrators in the team.
+                          required:
+                            - nanoid
+                            - name
+                            - riseid
+                            - rise_account
+                            - role
+                            - avatar
+                            - balance
+                            - payees_count
+                            - administrators_count
+                          additionalProperties: false
+                    required:
+                      - teams
+                    additionalProperties: false
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+  /v2/user/address:
+    put:
+      summary: Update user address details
+      tags:
+        - User Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                line_1:
+                  type: string
+                  description: The first line of the address.
+                line_2:
+                  type: string
+                  description: The second line of the address, optional.
+                city:
+                  type: string
+                  description: The city of the address.
+                state:
+                  type: string
+                  description: The state of the address.
+                country:
+                  type: string
+                  description: The country of the address.
+                zip_code:
+                  type: string
+                  description: The ZIP or postal code of the address.
+                timezone:
+                  type: string
+                  description: The timezone associated with the address.
+              additionalProperties: false
+      parameters:
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-token
+          required: true
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-action
+          required: true
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                required:
+                  - success
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
+  /v2/user/avatar/update:
+    post:
+      summary: Update user avatar
+      tags:
+        - User Management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                file_name:
+                  type: string
+                  minLength: 1
+              required:
+                - file_name
+              additionalProperties: false
+        required: true
+      parameters:
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-token
+          required: true
+        - schema:
+            type: string
+            minLength: 1
+          in: header
+          name: x-recaptcha-action
+          required: true
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - true
+                  data:
+                    type: string
+                    enum:
+                      - Your avatar was updated
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Bad Request
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Unauthorized
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Forbidden
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Not Found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                      - false
+                  data:
+                    type: string
+                  zod: {}
+                  error_code:
+                    type: string
+                required:
+                  - success
+                  - data
+                additionalProperties: false
+                description: Internal Server Error
 servers:
-  - url: http://127.0.0.1:8080
-    description: Local
-  - url: https://dev-pay-api.riseworks.dev
+  - url: http://localhost:8080
+    description: Localhost
+  - url: https://b2b-api.dev-riseworks.io
     description: Development
-  - url: https://staging-pay-api.riseworks.io
+  - url: https://b2b-api.staging-riseworks.io
     description: Staging
-  - url: https://pay-api.riseworks.io
+  - url: https://b2b-api.riseworks.io
     description: Production

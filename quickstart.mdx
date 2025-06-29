@@ -26,7 +26,7 @@ Welcome to Rise B2B API! This guide will help you integrate with our blockchain-
 
 Before you begin, make sure you have:
 
-- **A Rise account** with a RiseID (get one at [app.rise.works](https://app.rise.works))
+- **A Rise account** with a RiseID (get one at [app.rise.works](https://app.riseworks.io/))
 - **A Web3 wallet** (MetaMask, WalletConnect, etc.)
 - **Node.js** installed (version 16 or higher)
 - **Basic knowledge** of JavaScript/TypeScript
@@ -52,7 +52,12 @@ RISE_CHAIN_ID=42161  # Arbitrum mainnet
 # Your Rise credentials
 RISE_ID=rise_your_rise_id_here
 WALLET_ADDRESS=0xYourWalletAddressHere
+WALLET_PRIVATE_KEY=your_wallet_private_key_here
 ```
+
+<Warning>
+  **Security Note**: Never commit your `.env` file to version control. The wallet private key gives full access to your wallet. Store it securely and use environment variables in production.
+</Warning>
 
 ## Step 2: Authenticate with SIWE
 
@@ -69,7 +74,7 @@ class RiseAuth {
     this.baseUrl = process.env.RISE_API_URL;
   }
 
-  async authenticate(walletAddress, riseId) {
+  async authenticate(walletAddress, riseId, walletPrivateKey) {
     try {
       // Step 1: Get SIWE message
       console.log('🔐 Getting SIWE message...');
@@ -80,11 +85,10 @@ class RiseAuth {
       const { siwe } = siweResponse.data.data;
       console.log('✅ SIWE message received');
 
-      // Step 2: Sign the message (in a real app, this would be done by the user's wallet)
+      // Step 2: Sign the message using private key
       console.log('✍️ Signing message...');
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const signature = await signer.signMessage(siwe);
+      const wallet = new ethers.Wallet(walletPrivateKey);
+      const signature = await wallet.signMessage(siwe);
 
       // Extract nonce from the message
       const nonceMatch = siwe.match(/Nonce: (.+)/);
@@ -125,26 +129,10 @@ class RiseAPI {
   constructor(jwt) {
     this.baseUrl = process.env.RISE_API_URL;
     this.headers = {
-      'Authorization': `Bearer ${jwt}`,
+      'X-Auth-Token': `${jwt}`,
       'Content-Type': 'application/json'
     };
-  }
-
-  async getUserOrganizations() {
-    try {
-      console.log('🏢 Fetching user organizations...');
-      const response = await axios.get(
-        `${this.baseUrl}/v2/user/organizations`,
-        { headers: this.headers }
-      );
-      
-      console.log('✅ Organizations:', response.data.data.companies);
-      return response.data.data.companies;
-    } catch (error) {
-      console.error('❌ Failed to fetch organizations:', error.response?.data || error.message);
-      throw error;
-    }
-  }
+  } 
 
   async getUserTeams() {
     try {
@@ -199,20 +187,18 @@ async function main() {
     const auth = new RiseAuth();
     const jwt = await auth.authenticate(
       process.env.WALLET_ADDRESS,
-      process.env.RISE_ID
+      process.env.RISE_ID,
+      process.env.WALLET_PRIVATE_KEY
     );
 
     // Test API calls
     const api = new RiseAPI(jwt);
     
-    // Get user organizations
-    await api.getUserOrganizations();
-    
     // Get user teams
     await api.getUserTeams();
     
     // Get balance (replace with actual nanoid)
-    // await api.getEntityBalance('te_your_team_nanoid_here');
+    await api.getEntityBalance('your_entity_nanoid_here');
 
     console.log('\n🎉 Integration test completed successfully!');
     

@@ -5,25 +5,204 @@ description: 'End-to-end authentication flow with SIWE and JWT'
 
 # Auth Integration Guide
 
-This guide walks you through the full authentication flow using SIWE and JWT.
+This guide walks you through the full authentication flow using SIWE and JWT for Node.js applications.
 
-## Steps
-1. Request SIWE message from `/v2/auth/siwe`
-2. User signs with wallet
-3. Verify signature at `/v2/auth/verify`
-4. Use JWT for all API calls
+## Authentication Flow
 
-## Example (curl)
-```bash
-curl -X GET "https://api.rise.works/v2/auth/siwe?wallet=0x...&riseid=rise_..."
-curl -X POST "https://api.rise.works/v2/auth/verify" -d '{ "message": "...", "sig": "...", "nonce": "..." }'
+<Steps>
+  <Step title="Get SIWE Message">
+    Request a SIWE message from the Rise API
+  </Step>
+  <Step title="Sign Message">
+    Sign the message with your wallet using ethers.js
+  </Step>
+  <Step title="Verify Signature">
+    Submit the signature to get a JWT token
+  </Step>
+  <Step title="Use JWT">
+    Include JWT in X-Auth-Token header for API calls
+  </Step>
+</Steps>
+
+## Complete Integration Example
+
+```javascript
+const { ethers } = require('ethers');
+require('dotenv').config();
+
+class RiseAuth {
+  constructor(baseUrl = 'https://api.rise.works') {
+    this.baseUrl = baseUrl;
+  }
+
+  async authenticate(walletAddress, privateKey, riseId) {
+    try {
+      // Step 1: Get SIWE message
+      const siweResponse = await fetch(
+        `${this.baseUrl}/v2/auth/siwe?wallet=${walletAddress}&riseid=${riseId}`
+      );
+      
+      if (!siweResponse.ok) {
+        throw new Error(`Failed to get SIWE message: ${siweResponse.statusText}`);
+      }
+      
+      const siweResult = await siweResponse.json();
+      const { siwe } = siweResult.data;
+
+      // Step 2: Sign with wallet
+      const wallet = new ethers.Wallet(privateKey);
+      const signature = await wallet.signMessage(siwe);
+
+      // Extract nonce from SIWE message
+      const nonceMatch = siwe.match(/Nonce: (.+)/);
+      const nonce = nonceMatch ? nonceMatch[1] : '';
+
+      // Step 3: Verify and get JWT
+      const verifyResponse = await fetch(`${this.baseUrl}/v2/auth/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: siwe, sig: signature, nonce })
+      });
+
+      if (!verifyResponse.ok) {
+        throw new Error(`Failed to verify signature: ${verifyResponse.statusText}`);
+      }
+
+      const verifyResult = await verifyResponse.json();
+      const { jwt } = verifyResult.data;
+      
+      return jwt;
+    } catch (error) {
+      console.error('Authentication failed:', error);
+      throw error;
+    }
+  }
+
+  // Helper method to make authenticated API calls
+  async makeAuthenticatedRequest(endpoint, jwt, options = {}) {
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      ...options,
+      headers: {
+        'X-Auth-Token': `${jwt}`,
+        'Content-Type': 'application/json',
+        ...options.headers
+      }
+    });
+    
+    return response.json();
+  }
+}
+
+// Usage example
+async function main() {
+  const riseAuth = new RiseAuth();
+  
+  try {
+    // Authenticate
+    const jwt = await riseAuth.authenticate(
+      process.env.WALLET_ADDRESS,
+      process.env.WALLET_PRIVATE_KEY,
+      process.env.RISE_ID
+    );
+    
+    console.log('Authentication successful!');
+    
+    // Make authenticated API call
+    const teams = await riseAuth.makeAuthenticatedRequest('/v2/user/teams', jwt);
+    console.log('Teams:', teams);
+    
+  } catch (error) {
+    console.error('Error:', error.message);
+  }
+}
+
+// Run the example
+if (require.main === module) {
+  main();
+}
 ```
 
+## Environment Variables
+
+Create a `.env` file with your credentials:
+
+```bash
+WALLET_ADDRESS=0x1234567890abcdef...
+WALLET_PRIVATE_KEY=your_private_key_here
+RISE_ID=rise_your_rise_id_here
+```
+
+## API Examples
+
+### Get SIWE Message
+
+```bash
+curl -X GET "https://api.rise.works/v2/auth/siwe?wallet=0x1234567890abcdef...&riseid=rise_your_rise_id_here"
+```
+
+### Verify Signature
+
+```bash
+curl -X POST "https://api.rise.works/v2/auth/verify" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "your_siwe_message_here",
+    "sig": "your_signature_here",
+    "nonce": "your_nonce_here"
+  }'
+```
+
+### Authenticated API Call
+
+```bash
+curl -X GET "https://api.rise.works/v2/user/teams" \
+  -H "X-Auth-Token: your_jwt_token_here"
+```
+
+## Error Handling
+
+Common authentication errors and solutions:
+
+| Error | Description | Solution |
+|-------|-------------|----------|
+| `INVALID_WALLET` | Wallet address format is invalid | Ensure wallet address is a valid Ethereum address |
+| `INVALID_RISE_ID` | RiseID format is invalid | Check RiseID format and ensure it exists |
+| `SIGNATURE_MISMATCH` | Signature verification failed | Ensure correct wallet is signing the message |
+| `EXPIRED_NONCE` | Nonce has expired | Request a fresh SIWE message |
+| `JWT_EXPIRED` | JWT token has expired | Re-authenticate to get a new JWT |
+
+## Security Best Practices
+
+<Warning>
+  **Never expose private keys** in client-side code or commit them to version control.
+</Warning>
+
+- **Environment Variables**: Store private keys in environment variables
+- **HTTPS Only**: Always use HTTPS for API communications
+- **Token Expiration**: JWT tokens expire after 24 hours
+- **Error Handling**: Implement proper error handling for authentication failures
+- **Logging**: Log authentication events for security auditing
+
 ## Troubleshooting
-- Ensure wallet is connected
-- Check for correct nonce
-- JWT expired? Re-authenticate
+
+### Common Issues
+
+1. **"Invalid wallet address"**
+   - Ensure wallet address is a valid Ethereum address
+   - Check for typos in the address
+
+2. **"Signature verification failed"**
+   - Verify the correct wallet is signing the message
+   - Ensure the SIWE message hasn't been modified
+
+3. **"JWT expired"**
+   - JWT tokens expire after 24 hours
+   - Re-authenticate to get a fresh token
+
+4. **"Network error"**
+   - Check your internet connection
+   - Verify the API endpoint is correct
 
 <Note>
-See [Authentication](/authentication) for more details.
+  **Need help?** See the [Authentication](/authentication) page for detailed SIWE documentation or contact support at Hello@Riseworks.io
 </Note> 

@@ -125,7 +125,7 @@ class RiseAuth {
     this.baseUrl = baseUrl;
   }
 
-  async authenticate(walletAddress, riseId) {
+  async authenticate(walletAddress, riseId, walletPrivateKey) {
     try {
       // Step 1: Get SIWE message
       const siweResponse = await fetch(
@@ -133,10 +133,9 @@ class RiseAuth {
       );
       const { data: { siwe } } = await siweResponse.json();
 
-      // Step 2: Sign the message
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const signature = await signer.signMessage(siwe);
+      // Step 2: Sign the message using private key (Node.js)
+      const wallet = new ethers.Wallet(walletPrivateKey);
+      const signature = await wallet.signMessage(siwe);
 
       // Extract nonce from the message
       const nonceMatch = siwe.match(/Nonce: (.+)/);
@@ -154,64 +153,6 @@ class RiseAuth {
       });
 
       const { data: { jwt } } = await verifyResponse.json();
-      return jwt;
-    } catch (error) {
-      console.error('Authentication failed:', error);
-      throw error;
-    }
-  }
-}
-```
-
-```typescript
-import { ethers } from 'ethers';
-
-interface SiweResponse {
-  success: boolean;
-  data: { siwe: string };
-}
-
-interface VerifyResponse {
-  success: boolean;
-  data: { jwt: string };
-}
-
-class RiseAuth {
-  private baseUrl: string;
-
-  constructor(baseUrl: string = 'https://api.rise.works') {
-    this.baseUrl = baseUrl;
-  }
-
-  async authenticate(walletAddress: string, riseId: string): Promise<string> {
-    try {
-      // Step 1: Get SIWE message
-      const siweResponse = await fetch(
-        `${this.baseUrl}/v2/auth/siwe?wallet=${walletAddress}&riseid=${riseId}`
-      );
-      const { data: { siwe } }: SiweResponse = await siweResponse.json();
-
-      // Step 2: Sign the message
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const signature = await signer.signMessage(siwe);
-
-      // Extract nonce from the message
-      const nonceMatch = siwe.match(/Nonce: (.+)/);
-      const nonce = nonceMatch ? nonceMatch[1] : '';
-
-      // Step 3: Verify signature and get JWT
-      const verifyResponse = await fetch(`${this.baseUrl}/v2/auth/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: siwe,
-          sig: signature,
-          nonce: nonce
-        })
-      });
-
-      const { data: { jwt } }: VerifyResponse = await verifyResponse.json();
       return jwt;
     } catch (error) {
       console.error('Authentication failed:', error);
@@ -281,8 +222,12 @@ Common authentication errors and how to handle them:
 ## Security Considerations
 
 <Warning>
-  **Never store private keys or signatures in client-side code.** Always use wallet providers like MetaMask or WalletConnect for signing.
+  **Never store private keys or signatures in client-side code.** Always use wallet providers like MetaMask or WalletConnect for signing in browser environments.
 </Warning>
+
+<Info>
+  **Node.js Applications**: For server-side applications, you can use private keys directly with `ethers.Wallet()`. However, ensure the private key is stored securely in environment variables and never committed to version control.
+</Info>
 
 - **Token Expiration**: JWT tokens expire after 24 hours - implement automatic refresh logic
 - **Nonce Validation**: Each SIWE message has a unique nonce to prevent replay attacks - never reuse nonces
@@ -290,138 +235,4 @@ Common authentication errors and how to handle them:
 - **Rise Operations**: While SIWE uses Ethereum, Rise's payment and smart contract operations are on Arbitrum mainnet (Chain ID 42161)
 - **Domain Verification**: The SIWE message includes the domain to prevent phishing attacks - always verify the domain
 - **Signature Verification**: All signatures are verified on-chain to ensure authenticity
-
-## Environment-Specific Configuration
-
-<CodeGroup>
-
-```javascript
-// Development (Goerli testnet for SIWE, Arbitrum Sepolia for operations)
-const DEV_CONFIG = {
-  baseUrl: 'https://dev-pay-api.riseworks.dev',
-  siweChainId: 5,        // Goerli testnet for SIWE authentication
-  riseChainId: 421614    // Arbitrum Sepolia for Rise operations
-};
-
-// Staging
-const STAGING_CONFIG = {
-  baseUrl: 'https://staging-pay-api.riseworks.io',
-  siweChainId: 5,        // Goerli testnet for SIWE authentication
-  riseChainId: 421614    // Arbitrum Sepolia for Rise operations
-};
-
-// Production (Ethereum mainnet for SIWE, Arbitrum mainnet for operations)
-const PROD_CONFIG = {
-  baseUrl: 'https://pay-api.riseworks.io',
-  siweChainId: 1,        // Ethereum mainnet for SIWE authentication
-  riseChainId: 42161     // Arbitrum mainnet for Rise operations
-};
-```
-
-```typescript
-interface RiseConfig {
-  baseUrl: string;
-  siweChainId: number;   // Chain ID for SIWE authentication
-  riseChainId: number;   // Chain ID for Rise operations
-}
-
-const DEV_CONFIG: RiseConfig = {
-  baseUrl: 'https://dev-pay-api.riseworks.dev',
-  siweChainId: 5,        // Goerli testnet for SIWE authentication
-  riseChainId: 421614    // Arbitrum Sepolia for Rise operations
-};
-
-const STAGING_CONFIG: RiseConfig = {
-  baseUrl: 'https://staging-pay-api.riseworks.io',
-  siweChainId: 5,        // Goerli testnet for SIWE authentication
-  riseChainId: 421614    // Arbitrum Sepolia for Rise operations
-};
-
-const PROD_CONFIG: RiseConfig = {
-  baseUrl: 'https://pay-api.riseworks.io',
-  siweChainId: 1,        // Ethereum mainnet for SIWE authentication
-  riseChainId: 42161     // Arbitrum mainnet for Rise operations
-};
-```
-
-</CodeGroup>
-
-## Real-World Integration Examples
-
-### React Hook for Authentication
-
-```typescript
-import { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
-
-interface UseRiseAuth {
-  jwt: string | null;
-  loading: boolean;
-  error: string | null;
-  authenticate: (walletAddress: string, riseId: string) => Promise<void>;
-  logout: () => void;
-}
-
-export function useRiseAuth(): UseRiseAuth {
-  const [jwt, setJwt] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const authenticate = async (walletAddress: string, riseId: string) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const auth = new RiseAuth();
-      const token = await auth.authenticate(walletAddress, riseId);
-      setJwt(token);
-      localStorage.setItem('rise_jwt', token);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Authentication failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = () => {
-    setJwt(null);
-    localStorage.removeItem('rise_jwt');
-  };
-
-  useEffect(() => {
-    const storedJwt = localStorage.getItem('rise_jwt');
-    if (storedJwt) {
-      setJwt(storedJwt);
-    }
-  }, []);
-
-  return { jwt, loading, error, authenticate, logout };
-}
-```
-
-### Next.js API Route for Server-Side Auth
-
-```typescript
-// pages/api/auth/verify.ts
-import type { NextApiRequest, NextApiResponse } from 'next';
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
-
-  try {
-    const { message, sig, nonce } = req.body;
-
-    const response = await fetch('https://api.rise.works/v2/auth/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, sig, nonce })
-    });
-
-    const data = await response.json();
-    res.status(response.status).json(data);
-  } catch (error) {
-    res.status(500).json({ message: 'Internal server error' });
-  }
-}
+- **Private Key Security**: When using private keys in Node.js, store them in environment variables and use secure key management services in production

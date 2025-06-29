@@ -43,45 +43,45 @@ Welcome to the Rise B2B API! This guide will help you migrate from the V1 API to
 
 ### Authentication Endpoints
 
-| V1 Endpoint | B2B Endpoint | Changes | Migration Notes |
-|-------------|--------------|---------|-----------------|
-| `GET /v1/api/siwe` | `GET /v2/auth/siwe` | **Minor** | Updated path structure |
-| `POST /v1/api/siwe` | `POST /v2/auth/verify` | **Minor** | Updated path and endpoint name |
+| V1 Endpoint | B2B Endpoint |
+|-------------|--------------|
+| `GET /v1/api/siwe` | `GET /v2/auth/siwe` |
+| `POST /v1/api/siwe` | `POST /v2/auth/verify` |
 
 ### Team Management
 
-| V1 Endpoint | B2B Endpoint | Changes | Migration Notes |
-|-------------|--------------|---------|-----------------|
-| `GET /v1/teams` | `GET /v2/user/teams` | **Moved** | Now under user endpoints |
-| `GET /v1/teams/{teamId}/talent` | `GET /v2/teams/{team_nanoid}/users` | **Major** | Uses nanoid instead of numeric ID |
-| `GET /v1/teams/{teamId}/talent/{talentId}` | `GET /v2/teams/{team_nanoid}/member/{user_nanoid}/summary` | **Major** | Uses nanoids, updated endpoint structure |
-| `DELETE /v1/teams/{teamId}/talent/{talentId}` | `DELETE /v2/teams/{team_nanoid}/member/{user_nanoid}` | **Major** | Uses nanoids, updated endpoint structure |
+| V1 Endpoint | B2B Endpoint |
+|-------------|--------------|
+| `GET /v1/teams` | `GET /v2/user/teams` |
+| `GET /v1/teams/{teamId}/talent` | `GET /v2/teams/{team_nanoid}/users` |
+| `GET /v1/teams/{teamId}/talent/{talentId}` | `GET /v2/teams/{team_nanoid}/member/{user_nanoid}/summary` |
+| `DELETE /v1/teams/{teamId}/talent/{talentId}` | `DELETE /v2/teams/{team_nanoid}/member/{user_nanoid}` |
 
 ### Payment Processing
 
-| V1 Endpoint | B2B Endpoint | Changes | Migration Notes |
-|-------------|--------------|---------|-----------------|
-| `POST /v1/payments/pay` | `POST /v2/payments` + `PUT /v2/payments` | **Major** | Split into create and execute steps |
-| `PUT /v1/payments/pay` | `POST /v2/payments` + `PUT /v2/payments` | **Major** | Split into create and execute steps |
-| `POST /v1/payments/batch-pay` | `POST /v2/payments` + `PUT /v2/payments` | **Major** | Unified endpoint for single and batch payments |
-| `PUT /v1/payments/batch-pay` | `POST /v2/payments` + `PUT /v2/payments` | **Major** | Unified endpoint for single and batch payments |
-| `POST /v1/payments/batch-pay/intents` | `POST /v2/payments` + `PUT /v2/payments` | **Major** | Use `pay_now: false` flag for intents |
-| `GET /v1/payments/` | `GET /v2/payments` | **Major** | Updated query parameters and response format |
+| V1 Endpoint | B2B Endpoint |
+|-------------|--------------|
+| `POST /v1/payments/pay` | `POST /v2/payments` + `PUT /v2/payments` |
+| `PUT /v1/payments/pay` | `POST /v2/payments` + `PUT /v2/payments` |
+| `POST /v1/payments/batch-pay` | `POST /v2/payments` + `PUT /v2/payments` |
+| `PUT /v1/payments/batch-pay` | `POST /v2/payments` + `PUT /v2/payments` |
+| `POST /v1/payments/batch-pay/intents` | `POST /v2/payments` + `PUT /v2/payments` |
+| `GET /v1/payments/` | `GET /v2/payments` |
 
 ### Balance Management
 
-| V1 Endpoint | B2B Endpoint | Changes | Migration Notes |
-|-------------|--------------|---------|-----------------|
-| `GET /v1/riseid/{rise_id}/balance` | `GET /v2/balance?nanoid={nanoid}` | **Major** | Uses nanoid instead of rise_id, updated response format |
+| V1 Endpoint | B2B Endpoint |
+|-------------|--------------|
+| `GET /v1/riseid/{rise_id}/balance` | `GET /v2/balance?nanoid={nanoid}` |
 
 ### Invites Management
 
-| V1 Endpoint | B2B Endpoint | Changes | Migration Notes |
-|-------------|--------------|---------|-----------------|
-| `GET /v1/invites/` | `GET /v2/invites` | **Minor** | Updated path structure |
-| `POST /v1/invites/` | `POST /v2/invites` | **Minor** | Updated path structure |
-| `POST /v1/invites/manager` | `POST /v2/invites/manager` | **Minor** | Updated path structure |
-| `POST /v1/invites/warmed` | `POST /v2/invites` | **Minor** | Unified endpoint for all invite types |
+| V1 Endpoint | B2B Endpoint |
+|-------------|--------------|
+| `GET /v1/invites/` | `GET /v2/invites` |
+| `POST /v1/invites/` (employees/contractors) | `POST /v2/invites` |
+| `POST /v1/invites/` (managers) | `POST /v2/invites/manager` + `PUT /v2/invites/manager` |
+| `POST /v1/invites/warmed` | `POST /v2/invites` |
 
 ## New B2B API Endpoints (Not in V1)
 
@@ -97,74 +97,13 @@ The B2B API introduces several new endpoints that weren't available in V1:
 - `GET /v2/teams/{team_nanoid}/member/{user_nanoid}/settings` - Get member settings
 - `PUT /v2/teams/{team_nanoid}/member/{user_nanoid}/settings` - Update member settings
 
-### Company Management
-- `GET /v2/company/{nanoid}/users` - Get company users
-- `PUT /v2/company/{nanoid}/address` - Update company address
-- `GET /v2/company/{nanoid}/details` - Get company details
-- `PUT /v2/company/{nanoid}/details` - Update company details
-- `GET /v2/company/{nanoid}/members/{user_nanoid}/settings` - Get member settings
-- `GET /v2/company/{nanoid}/settings` - Get company settings
-- `PUT /v2/company/{nanoid}/settings` - Update company settings
-- `GET /v2/company/{nanoid}/contacts` - Get company contacts
-- `GET /v2/company/{nanoid}/ownership` - Get company ownership
-
-### User Management
-- `GET /v2/user/organizations` - Get user organizations
-- `PUT /v2/user/address` - Update user address
-- `POST /v2/user/avatar/update` - Update user avatar
-
-### Payroll Management
-- `GET /v2/payroll/team/{team_nanoid}` - Get team payroll
-- `POST /v2/payroll/team/{team_nanoid}` - Create team payroll
-- `GET /v2/payroll/team/{team_nanoid}/period` - Get payroll periods
-
-### Withdrawal Management
-- `POST /v2/withdraw/{account_nanoid}` - Create withdrawal
-- `PUT /v2/withdraw/{account_nanoid}` - Execute withdrawal
-- `GET /v2/withdraw/{account_nanoid}/fee` - Get withdrawal fee
-
-### Webhook Management
-- `POST /webhooks/register` - Register webhook
-- `GET /webhooks` - List webhooks
-- `GET /webhooks/{webhook_nanoid}` - Get webhook
-- `PUT /webhooks/{webhook_nanoid}` - Update webhook
-- `DELETE /webhooks/{webhook_nanoid}` - Delete webhook
-
-### User Profile
-- `GET /v2/me` - Get current user profile
-
 ## Authentication Migration
-
-### V1 Authentication (Old)
-```javascript
-// V1: SIWE authentication
-const siweResponse = await fetch('https://api.rise.works/v1/api/siwe', {
-  method: 'GET',
-  headers: { 'Content-Type': 'application/json' }
-});
-
-const { siwe } = await siweResponse.json();
-
-// Sign with wallet
-const provider = new ethers.BrowserProvider(window.ethereum);
-const signer = await provider.getSigner();
-const signature = await signer.signMessage(siwe);
-
-// Verify and get JWT
-const verifyResponse = await fetch('https://api.rise.works/v1/api/siwe', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ message: siwe, signature: signature })
-});
-
-const { token } = await verifyResponse.json();
-```
 
 ### B2B Authentication (New)
 ```javascript
 // B2B: SIWE authentication flow
 class RiseAuth {
-  async authenticate(walletAddress, riseId) {
+  async authenticate(walletAddress, privateKey, riseId) {
     // Step 1: Get SIWE message
     const siweResponse = await fetch(
       `https://api.rise.works/v2/auth/siwe?wallet=${walletAddress}&riseid=${riseId}`
@@ -172,9 +111,8 @@ class RiseAuth {
     const { siwe } = siweResponse.data.data;
 
     // Step 2: Sign with wallet
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    const signature = await signer.signMessage(siwe);
+    const wallet = new ethers.Wallet(privateKey);
+    const signature = await wallet.signMessage(siwe);
 
     // Extract nonce from SIWE message
     const nonceMatch = siwe.match(/Nonce: (.+)/);
@@ -194,26 +132,13 @@ class RiseAuth {
 
 // Use JWT in requests (same as V1)
 const apiResponse = await fetch('https://api.rise.works/v2/teams', {
-  headers: { 'Authorization': `Bearer ${jwt}` }
+  headers: { 'X-Auth-Token': `${jwt}` }
 });
 ```
 
 ## Data Format Changes
 
 ### Response Format
-
-**V1 Response:**
-```json
-{
-  "teams": [
-    {
-      "id": 123,
-      "name": "Engineering Team",
-      "created_at": "2024-01-01T00:00:00Z"
-    }
-  ]
-}
-```
 
 **B2B Response:**
 ```json
@@ -232,14 +157,6 @@ const apiResponse = await fetch('https://api.rise.works/v2/teams', {
 ```
 
 ### Error Format
-
-**V1 Error:**
-```json
-{
-  "error": "Team not found",
-  "error_code": "TEAM_NOT_FOUND"
-}
-```
 
 **B2B Error:**
 ```json
@@ -282,12 +199,6 @@ const apiResponse = await fetch('https://api.rise.works/v2/teams', {
 - [ ] **Test all endpoints** - Verify functionality works as expected
 - [ ] **Update documentation** - Update internal API documentation
 
-### Phase 4: Production Deployment
-- [ ] **Deploy to staging** - Test with staging environment
-- [ ] **Monitor performance** - Ensure no performance regressions
-- [ ] **Deploy to production** - Switch to B2B API
-- [ ] **Monitor logs** - Watch for any issues
-
 ## Code Migration Examples
 
 ### Team Member Retrieval
@@ -308,7 +219,7 @@ const getTeamMembers = async (teamId) => {
 ```javascript
 const getTeamMembers = async (teamNanoid) => {
   const response = await fetch(`https://api.rise.works/v2/teams/${teamNanoid}/users`, {
-    headers: { 'Authorization': `Bearer ${jwt}` }
+    headers: { 'X-Auth-Token': `${jwt}` }
   });
   
   const result = await response.json();
@@ -318,58 +229,14 @@ const getTeamMembers = async (teamNanoid) => {
 
 ### Payment Processing
 
-**V1 Code:**
-```javascript
-const createPayment = async (teamId, recipients) => {
-  // Step 1: Get typed data
-  const typedDataResponse = await fetch('https://api.rise.works/v1/payments/pay', {
-    method: 'PUT',
-    headers: {
-      'X-Auth-Token': token,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      team_id: teamId,
-      recipients: recipients
-    })
-  });
-  
-  const { typed_data } = await typedDataResponse.json();
-  
-  // Step 2: Sign and execute
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
-  const signature = await signer.signTypedData(
-    typed_data.domain,
-    typed_data.types,
-    typed_data.message
-  );
-  
-  const executeResponse = await fetch('https://api.rise.works/v1/payments/pay', {
-    method: 'POST',
-    headers: {
-      'X-Auth-Token': token,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      team_id: teamId,
-      recipients: recipients,
-      signature: signature
-    })
-  });
-  
-  return await executeResponse.json();
-};
-```
-
 **B2B Code:**
 ```javascript
-const createPayment = async (teamNanoid, recipients, walletAddress) => {
+const createPayment = async (teamNanoid, recipients, walletAddress, privateKey) => {
   // Step 1: Create payment draft
   const createResponse = await fetch('https://api.rise.works/v2/payments', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${jwt}`,
+      'X-Auth-Token': `${jwt}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
@@ -383,9 +250,8 @@ const createPayment = async (teamNanoid, recipients, walletAddress) => {
   const { typed_data } = createResponse.data.data;
   
   // Step 2: Sign typed data
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
-  const signature = await signer.signTypedData(
+  const wallet = new ethers.Wallet(privateKey);
+  const signature = await wallet.signTypedData(
     typed_data.domain,
     typed_data.types,
     typed_data.typed_data
@@ -395,7 +261,7 @@ const createPayment = async (teamNanoid, recipients, walletAddress) => {
   const executeResponse = await fetch('https://api.rise.works/v2/payments', {
     method: 'PUT',
     headers: {
-      'Authorization': `Bearer ${jwt}`,
+      'X-Auth-Token': `${jwt}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
@@ -414,23 +280,11 @@ const createPayment = async (teamNanoid, recipients, walletAddress) => {
 
 ### Balance Retrieval
 
-**V1 Code:**
-```javascript
-const getBalance = async (riseId) => {
-  const response = await fetch(`https://api.rise.works/v1/riseid/${riseId}/balance`, {
-    headers: { 'X-Auth-Token': token }
-  });
-  
-  const balance = await response.json();
-  return balance; // Returns balance in decimals
-};
-```
-
 **B2B Code:**
 ```javascript
 const getBalance = async (nanoid) => {
   const response = await fetch(`https://api.rise.works/v2/balance?nanoid=${nanoid}`, {
-    headers: { 'Authorization': `Bearer ${jwt}` }
+    headers: { 'X-Auth-Token': `${jwt}` }
   });
   
   const result = await response.json();
@@ -444,7 +298,7 @@ const getBalance = async (nanoid) => {
 **Problem:** Getting 401 errors after migration
 **Solution:** 
 - Update SIWE endpoint paths from `/v1/api/siwe` to `/v2/auth/siwe` and `/v2/auth/verify`
-- Check that JWT tokens are included as `Authorization: Bearer <jwt>` headers
+- Check that JWT tokens are included as `X-Auth-Token: <jwt>` headers
 - Verify JWT hasn't expired (24-hour lifetime)
 
 ### Issue 2: ID Format Errors
@@ -473,7 +327,7 @@ const getBalance = async (nanoid) => {
 ### 1. Authentication Test
 ```javascript
 // Test updated SIWE authentication
-const jwt = await riseAuth.authenticate(walletAddress, riseId);
+const jwt = await riseAuth.authenticate(walletAddress, privateKey, riseId);
 console.log('Authentication successful:', !!jwt);
 ```
 
@@ -481,7 +335,7 @@ console.log('Authentication successful:', !!jwt);
 ```javascript
 // Test basic API calls
 const teams = await fetch('https://api.rise.works/v2/user/teams', {
-  headers: { 'Authorization': `Bearer ${jwt}` }
+  headers: { 'X-Auth-Token': `${jwt}` }
 });
 console.log('Teams API working:', teams.ok);
 ```
@@ -509,20 +363,6 @@ console.log('Payment draft created:', !!paymentDraft.typed_data);
     Check API status
   </Card>
 </CardGroup>
-
-## Migration Timeline
-
-### Recommended Timeline
-- **Week 1-2**: Set up updated SIWE authentication and test basic endpoints
-- **Week 3-4**: Migrate core functionality (teams, users, balances)
-- **Week 5-6**: Implement EIP-712 signing for payments and advanced features
-- **Week 7-8**: Testing and production deployment
-
-### Rollback Plan
-- Keep V1 API access during migration period
-- Implement feature flags to switch between V1 and B2B
-- Monitor error rates and performance metrics
-- Have rollback procedures ready if issues arise
 
 <Note>
   **Need Help?** Our support team is available to help with your migration. Contact us at Hello@Riseworks.io for personalized assistance.
