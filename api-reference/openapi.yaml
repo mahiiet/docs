@@ -325,7 +325,7 @@ paths:
                 description: Internal Server Error
   /v2/balance:
     get:
-      summary: Get entity balance
+      summary: Get entity balance mahendra
       tags:
         - Balance
       description: Retrieves balance and details of an entity using their nanoid (te-
