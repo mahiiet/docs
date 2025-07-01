@@ -1,0 +1,511 @@
+---
+title: 'Environment Management'
+description: 'Learn how to manage dev, staging, and production environments with the same Mintlify account'
+---
+
+# Environment Management
+
+Learn how to effectively manage multiple environments (development, staging, and production) with the same Mintlify account while maintaining clear separation and proper documentation workflows.
+
+## Overview
+
+Managing multiple environments in Mintlify allows you to:
+- **Test documentation changes** before going live
+- **Maintain environment-specific API references**
+- **Provide different documentation for different user groups**
+- **Ensure documentation accuracy** across all environments
+
+## Approach 1: Multiple Documentation Sites (Recommended)
+
+The most effective approach is to create separate documentation sites for each environment.
+
+### Setup Process
+
+#### 1. Create Separate Sites in Mintlify Dashboard
+
+1. **Development Site**:
+   - Name: `Rise API - Development`
+   - Domain: `dev-docs.riseworks.io` or `docs-dev.riseworks.io`
+   - Purpose: Testing new features and documentation changes
+
+2. **Staging Site**:
+   - Name: `Rise API - Staging`
+   - Domain: `staging-docs.riseworks.io` or `docs-staging.riseworks.io`
+   - Purpose: Pre-production validation and internal testing
+
+3. **Production Site**:
+   - Name: `Rise API - Production`
+   - Domain: `docs.riseworks.io` (your main documentation site)
+   - Purpose: Live documentation for end users
+
+#### 2. Environment-Specific Configuration
+
+Each environment should have its own `docs.json` configuration:
+
+<CodeGroup>
+
+```json Development (dev-docs.riseworks.io)
+{
+  "name": "Rise B2B API - Development",
+  "description": "Development environment for Rise B2B API",
+  "api": {
+    "baseUrl": "https://b2b-api.dev-riseworks.io",
+    "auth": {
+      "method": "bearer",
+      "name": "Authorization"
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Environment: DEV",
+        "href": "#",
+        "style": "warning"
+      }
+    ]
+  }
+}
+```
+
+```json Staging (staging-docs.riseworks.io)
+{
+  "name": "Rise B2B API - Staging",
+  "description": "Staging environment for Rise B2B API",
+  "api": {
+    "baseUrl": "https://b2b-api.staging-riseworks.io",
+    "auth": {
+      "method": "bearer",
+      "name": "Authorization"
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Environment: STAGING",
+        "href": "#",
+        "style": "warning"
+      }
+    ]
+  }
+}
+```
+
+```json Production (docs.riseworks.io)
+{
+  "name": "Rise B2B API",
+  "description": "Production documentation for Rise B2B API",
+  "api": {
+    "baseUrl": "https://b2b-api.riseworks.io",
+    "auth": {
+      "method": "bearer",
+      "name": "Authorization"
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+#### 3. Environment-Specific Content
+
+Create environment-specific content by using conditional rendering or separate files:
+
+<CodeGroup>
+
+```mdx Development Environment Notice
+<Warning>
+  **Development Environment**: This documentation is for the development environment. 
+  API endpoints point to `https://b2b-api.dev-riseworks.io`
+</Warning>
+```
+
+```mdx Staging Environment Notice
+<Warning>
+  **Staging Environment**: This documentation is for the staging environment. 
+  API endpoints point to `https://b2b-api.staging-riseworks.io`
+</Warning>
+```
+
+```mdx Production Environment Notice
+<Info>
+  **Production Environment**: This is the live documentation for production use.
+  API endpoints point to `https://b2b-api.riseworks.io`
+</Info>
+```
+
+</CodeGroup>
+
+## Approach 2: Single Site with Environment Toggle
+
+For simpler setups, you can use a single documentation site with environment toggles.
+
+### Configuration
+
+Update your `docs.json` to include multiple base URLs:
+
+```json
+{
+  "api": {
+    "baseUrl": [
+      "https://b2b-api.riseworks.io",
+      "https://b2b-api.staging-riseworks.io", 
+      "https://b2b-api.dev-riseworks.io"
+    ],
+    "auth": {
+      "method": "bearer",
+      "name": "Authorization"
+    }
+  }
+}
+```
+
+### Environment-Specific Content
+
+Use environment variables or build-time configuration to show different content:
+
+```mdx
+{process.env.NODE_ENV === 'development' && (
+  <Warning>
+    **Development Mode**: This documentation is running in development mode.
+  </Warning>
+)}
+
+{process.env.NODE_ENV === 'staging' && (
+  <Warning>
+    **Staging Mode**: This documentation is running in staging mode.
+  </Warning>
+)}
+```
+
+## Approach 3: Git Branch Strategy
+
+Use different Git branches for different environments:
+
+### Branch Structure
+
+```
+main (production)
+├── staging
+│   └── development
+```
+
+### Workflow
+
+1. **Development**: Work on `development` branch
+2. **Staging**: Merge `development` into `staging` for testing
+3. **Production**: Merge `staging` into `main` for live deployment
+
+### Automated Deployment
+
+Set up CI/CD pipelines to automatically deploy different branches to different environments:
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy Documentation
+
+on:
+  push:
+    branches: [main, staging, development]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Deploy to Development
+        if: github.ref == 'refs/heads/development'
+        run: |
+          mintlify deploy --site-id dev-site-id
+          
+      - name: Deploy to Staging
+        if: github.ref == 'refs/heads/staging'
+        run: |
+          mintlify deploy --site-id staging-site-id
+          
+      - name: Deploy to Production
+        if: github.ref == 'refs/heads/main'
+        run: |
+          mintlify deploy --site-id production-site-id
+```
+
+## Environment-Specific API Documentation
+
+### OpenAPI Configuration
+
+Your OpenAPI specification already includes multiple servers. Ensure each environment uses the correct server:
+
+```yaml
+servers:
+  - url: https://b2b-api.riseworks.io
+    description: Production
+  - url: https://b2b-api.staging-riseworks.io
+    description: Staging
+  - url: https://b2b-api.dev-riseworks.io
+    description: Development
+```
+
+### Environment Variables
+
+Use environment variables to manage API endpoints:
+
+```javascript
+// config/environments.js
+const environments = {
+  development: {
+    apiUrl: 'https://b2b-api.dev-riseworks.io',
+    chainId: 421614, // Arbitrum Sepolia
+    siweChainId: 5   // Goerli testnet
+  },
+  staging: {
+    apiUrl: 'https://b2b-api.staging-riseworks.io',
+    chainId: 42161,  // Arbitrum mainnet
+    siweChainId: 1   // Ethereum mainnet
+  },
+  production: {
+    apiUrl: 'https://b2b-api.riseworks.io',
+    chainId: 42161,  // Arbitrum mainnet
+    siweChainId: 1   // Ethereum mainnet
+  }
+};
+
+module.exports = environments;
+```
+
+## Best Practices
+
+### 1. Clear Environment Identification
+
+Always clearly identify which environment the documentation is for:
+
+```mdx
+<CardGroup cols={3}>
+  <Card title="🌱 Development" icon="code">
+    Test new features and API changes
+  </Card>
+  <Card title="🔍 Staging" icon="search">
+    Validate changes before production
+  </Card>
+  <Card title="🚀 Production" icon="rocket">
+    Live documentation for end users
+  </Card>
+</CardGroup>
+```
+
+### 2. Environment-Specific Examples
+
+Provide environment-specific code examples:
+
+<CodeGroup>
+
+```javascript Development
+const config = {
+  baseUrl: 'https://b2b-api.dev-riseworks.io',
+  chainId: 421614,
+  siweChainId: 5
+};
+```
+
+```javascript Staging
+const config = {
+  baseUrl: 'https://b2b-api.staging-riseworks.io',
+  chainId: 42161,
+  siweChainId: 1
+};
+```
+
+```javascript Production
+const config = {
+  baseUrl: 'https://b2b-api.riseworks.io',
+  chainId: 42161,
+  siweChainId: 1
+};
+```
+
+</CodeGroup>
+
+### 3. Consistent Navigation
+
+Maintain consistent navigation across environments while highlighting differences:
+
+```json
+{
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Environment Info",
+            "pages": [
+              "environment-overview",
+              "environment-setup",
+              "environment-migration"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### 4. Automated Testing
+
+Set up automated tests for each environment:
+
+```javascript
+// tests/environment-tests.js
+describe('Environment Tests', () => {
+  const environments = ['development', 'staging', 'production'];
+  
+  environments.forEach(env => {
+    describe(`${env} environment`, () => {
+      it('should have valid API endpoints', async () => {
+        const response = await fetch(`${config[env].apiUrl}/health`);
+        expect(response.status).toBe(200);
+      });
+      
+      it('should have working authentication', async () => {
+        // Test authentication flow
+      });
+    });
+  });
+});
+```
+
+## Deployment Workflow
+
+### 1. Development Workflow
+
+```bash
+# Work on development branch
+git checkout development
+git pull origin development
+
+# Make changes
+# Test locally
+mintlify dev
+
+# Commit and push
+git add .
+git commit -m "Add new feature documentation"
+git push origin development
+```
+
+### 2. Staging Workflow
+
+```bash
+# Merge development into staging
+git checkout staging
+git merge development
+git push origin staging
+
+# Deploy to staging
+mintlify deploy --site-id staging-site-id
+```
+
+### 3. Production Workflow
+
+```bash
+# Merge staging into main
+git checkout main
+git merge staging
+git push origin main
+
+# Deploy to production
+mintlify deploy --site-id production-site-id
+```
+
+## Monitoring and Maintenance
+
+### 1. Environment Health Checks
+
+Set up monitoring for each environment:
+
+```javascript
+// scripts/health-check.js
+const environments = require('./config/environments');
+
+async function checkEnvironmentHealth() {
+  for (const [env, config] of Object.entries(environments)) {
+    try {
+      const response = await fetch(`${config.apiUrl}/health`);
+      console.log(`${env}: ${response.status === 200 ? '✅' : '❌'}`);
+    } catch (error) {
+      console.log(`${env}: ❌ ${error.message}`);
+    }
+  }
+}
+
+checkEnvironmentHealth();
+```
+
+### 2. Documentation Sync
+
+Ensure documentation stays in sync across environments:
+
+```bash
+# Script to sync documentation
+#!/bin/bash
+# sync-docs.sh
+
+echo "Syncing documentation across environments..."
+
+# Copy production docs to staging
+cp -r docs-production/* docs-staging/
+
+# Copy staging docs to development
+cp -r docs-staging/* docs-development/
+
+# Update environment-specific configurations
+echo "Updated environment configurations"
+```
+
+## Troubleshooting
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| **API endpoints not working** | Verify environment-specific URLs in OpenAPI spec |
+| **Authentication failing** | Check environment-specific chain IDs and contracts |
+| **Documentation out of sync** | Run documentation sync script |
+| **Deployment failures** | Check Mintlify site IDs and permissions |
+
+### Environment-Specific Debugging
+
+```javascript
+// debug-environment.js
+const debugEnvironment = (env) => {
+  console.log(`Environment: ${env}`);
+  console.log(`API URL: ${config[env].apiUrl}`);
+  console.log(`Chain ID: ${config[env].chainId}`);
+  console.log(`SIWE Chain ID: ${config[env].siweChainId}`);
+};
+
+debugEnvironment(process.env.NODE_ENV || 'development');
+```
+
+## Support
+
+Need help with environment management?
+
+<CardGroup cols={2}>
+  <Card title="Documentation" icon="book" href="/development">
+    Local development guide
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Environment-specific API docs
+  </Card>
+  <Card title="Support Email" icon="mail" href="mailto:Hello@Riseworks.io">
+    Get help from our team
+  </Card>
+  <Card title="Status Page" icon="activity" href="https://status.rise.works">
+    Check environment status
+  </Card>
+</CardGroup>
+
+<Note>
+  **Best Practice**: Always test documentation changes in development before promoting to staging and production environments.
+</Note> 
