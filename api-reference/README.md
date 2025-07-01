@@ -1,3 +1,3 @@
-# Generated on Tue Jul  1 16:40:40 UTC 2025
-Source: riseworks/api-monorepo@c055ea9500a6b47a248d71e893573bf798a740e8
+# Generated on Tue Jul  1 16:51:18 UTC 2025
+Source: riseworks/api-monorepo@e8ddc19e83dac9f146cfe08fb2a76d62cf79ddd8
 Branch: feat/ticket-2592
